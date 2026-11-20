@@ -2,1940 +2,1531 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>Ma Sói: Lời Nói Dối Cuối Cùng</title>
-<!-- Thư viện PeerJS -->
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
-:root{
-  --bg:#08080d;--panel:#12121b;--line:#2a2a38;
-  --gold:#c9a227;--gold-dim:#7a6317;--blood:#a02020;--blood-l:#d94b4b;
-  --text:#d9d3c5;--muted:#7d7768;
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --panel: #151520;
+  --panel-2: #1e1e2d;
+  --line: #2a2a3c;
+  --gold: #d4af37;
+  --gold-dim: #8b7322;
+  --blood: #a02020;
+  --blood-light: #d94b4b;
+  --text: #e2dcd0;
+  --muted: #88837a;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;overflow:hidden}
-#fog{position:fixed;inset:-25%;z-index:0;pointer-events:none;opacity:.5;
-  background:
-    radial-gradient(ellipse at 20% 30%,rgba(110,125,170,.22),transparent 50%),
-    radial-gradient(ellipse at 72% 62%,rgba(80,95,140,.20),transparent 55%),
-    radial-gradient(ellipse at 45% 85%,rgba(140,150,190,.14),transparent 60%);
-  animation:fogMove 42s ease-in-out infinite alternate}
-@keyframes fogMove{0%{transform:translate(0,0) scale(1)}100%{transform:translate(5%,-4%) scale(1.18)}}
-#vig{position:fixed;inset:0;z-index:1;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 45%,transparent 35%,rgba(0,0,0,.85) 100%)}
-.screen{position:fixed;inset:0;z-index:2;display:none;flex-direction:column;overflow-y:auto}
-.screen.on{display:flex}
 
-/* CENTERED SCREENS */
-#s-login,#s-menu,#s-bot,#s-online,#s-lobby,#s-dealing,#s-end,#s-friends{
-  align-items:center;justify-content:center;text-align:center;padding:24px}
-.inner{max-width:640px;width:100%}
-.title{font-size:clamp(28px,7vw,56px);letter-spacing:.12em;color:var(--gold);
-  text-shadow:0 0 28px rgba(201,162,39,.5);font-weight:normal}
-.subtitle{color:var(--muted);letter-spacing:.34em;font-size:clamp(10px,2vw,13px);
-  margin-top:10px;text-transform:uppercase}
-.divider{height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);
-  margin:22px auto;max-width:420px}
-.lbl{display:block;color:var(--muted);font-size:11px;letter-spacing:.2em;
-  text-transform:uppercase;margin:16px 0 8px;text-align:left}
-.txt{width:100%;padding:13px 16px;background:#0d0d15;border:1px solid var(--line);
-  border-radius:6px;color:var(--text);font-family:inherit;font-size:16px;outline:none;transition:.2s}
-.txt:focus{border-color:var(--gold-dim);box-shadow:0 0 14px rgba(201,162,39,.2)}
-textarea.txt{resize:vertical;min-height:90px;line-height:1.6}
-.avRow{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
-.avOpt{font-size:26px;width:48px;height:48px;display:flex;align-items:center;
-  justify-content:center;border:1px solid var(--line);border-radius:50%;
-  cursor:pointer;background:#0d0d15;transition:.2s}
-.avOpt:hover{border-color:var(--gold-dim);transform:scale(1.08)}
-.avOpt.on{border-color:var(--gold);background:#1a1608;box-shadow:0 0 16px rgba(201,162,39,.4)}
-.btnMain{background:linear-gradient(180deg,#2a2114,#171208);border:1px solid var(--gold-dim);
-  color:var(--gold);padding:15px 44px;font-size:16px;letter-spacing:.16em;cursor:pointer;
-  font-family:inherit;border-radius:6px;transition:.25s;text-transform:uppercase;margin-top:16px}
-.btnMain:hover{box-shadow:0 0 30px rgba(201,162,39,.4);border-color:var(--gold);color:#ffe9a8}
-.btnMain:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
-.btnBack{background:transparent;border:none;color:var(--muted);cursor:pointer;
-  font-family:inherit;font-size:13px;margin-top:18px;letter-spacing:.05em}
-.btnBack:hover{color:var(--gold)}
-.modeBtn{display:block;width:100%;text-align:left;background:var(--panel);
-  border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:12px;
-  cursor:pointer;font-family:inherit;color:var(--text);transition:.25s}
-.modeBtn:hover{border-color:var(--gold-dim);background:#1a1810;transform:translateX(4px)}
-.modeTitle{font-size:17px;color:var(--gold);margin-bottom:5px}
-.modeDesc{font-size:13px;color:var(--muted);line-height:1.5}
-.hello{color:var(--muted);font-size:14px;margin-bottom:22px;letter-spacing:.05em}
-.hello b{color:var(--gold)}
-.muted{color:var(--muted);font-size:13px;line-height:1.7}
-.countRow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 4px}
-.cbtn{background:var(--panel);border:1px solid var(--line);color:var(--text);
-  padding:10px 18px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:15px;transition:.2s}
-.cbtn:hover{border-color:var(--gold-dim);color:var(--gold)}
-.cbtn.on{background:var(--gold-dim);border-color:var(--gold);color:#fff;
-  box-shadow:0 0 16px rgba(201,162,39,.35)}
-.hint{color:#5f5a50;font-size:12px;margin-top:20px;letter-spacing:.05em;line-height:1.7}
-.codeRow{font-size:16px;color:var(--muted);letter-spacing:.1em;margin-bottom:18px}
-.codeRow b{color:var(--gold);font-size:24px;letter-spacing:.3em;
-  text-shadow:0 0 18px rgba(201,162,39,.4)}
-.lobbyList{display:flex;flex-direction:column;gap:7px;max-height:36vh;overflow-y:auto;margin-bottom:14px}
-.lobbyItem{display:flex;align-items:center;gap:11px;padding:10px 14px;
-  background:var(--panel);border:1px solid var(--line);border-radius:7px;text-align:left}
-.lobbyItem .lav{font-size:22px}
-.lobbyItem .lname{color:var(--text);font-size:14px}
-.lobbyItem .ltag{margin-left:auto;font-size:10px;color:var(--gold-dim);
-  letter-spacing:.16em;text-transform:uppercase}
-.lobbyItem.bot{opacity:.65;border-style:dashed}
-.waiting{color:var(--muted);font-size:13px;font-style:italic;text-align:center;padding:8px}
-.waiting::after{content:'';animation:dots 1.4s steps(4,end) infinite}
-@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Be Vietnam Pro', sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-/* DEALING */
-.dealBox{max-width:520px;width:100%;text-align:center}
-.dealTitle{font-size:22px;color:var(--gold);letter-spacing:.2em;margin-bottom:26px}
-.cardsRow{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:26px}
-.dealCard{width:56px;height:78px;border-radius:6px;
-  background:linear-gradient(160deg,#1a1720,#0a0a12);border:1px solid var(--gold-dim);
-  display:flex;align-items:center;justify-content:center;font-size:30px;
-  color:var(--gold-dim);animation:dealIn .5s ease forwards;opacity:0;transform:translateY(-40px) rotateY(90deg)}
-@keyframes dealIn{to{opacity:1;transform:none}}
-.dealText{color:var(--muted);font-size:14px;letter-spacing:.1em;min-height:20px}
+/* Layout */
+.screen { position: fixed; inset: 0; display: none; flex-direction: column; z-index: 10; background: var(--bg); }
+.screen.on { display: flex; }
+.center-screen { align-items: center; justify-content: center; padding: 20px; }
+.inner { max-width: 600px; width: 100%; text-align: center; }
 
-/* GAME */
-#s-game{display:none;flex-direction:column}
-#s-game.on{display:flex}
-.topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;
-  background:linear-gradient(180deg,#0e0e16,#0a0a11);
-  border-bottom:1px solid var(--line);flex-shrink:0}
-.brand{color:var(--gold);letter-spacing:.16em;font-size:14px;white-space:nowrap}
-.pill{padding:5px 16px;border-radius:20px;font-size:12px;letter-spacing:.14em;
-  border:1px solid var(--line);background:#101019;white-space:nowrap}
-body.night .pill{border-color:#3a4a72;color:#8fb0ff;box-shadow:0 0 18px rgba(80,120,220,.25)}
-body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(201,162,39,.25)}
-.roleMini{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
-.roleMini b{color:var(--gold)}
-.btnExit{background:transparent;border:1px solid var(--line);color:var(--muted);
-  padding:5px 10px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;transition:0.2s}
-.btnExit:hover{border-color:var(--blood-l);color:var(--blood-l)}
-.body{display:flex;flex:1;min-height:0}
-.sidebar{width:200px;flex-shrink:0;border-right:1px solid var(--line);
-  background:rgba(10,10,16,.72);overflow-y:auto;padding:12px}
-.sidebar h3{font-size:11px;letter-spacing:.22em;color:var(--muted);
-  text-transform:uppercase;margin-bottom:12px;font-weight:normal}
-.pcard{display:flex;align-items:center;gap:9px;padding:7px;border-radius:6px;
-  margin-bottom:6px;background:#101019;border:1px solid #1c1c28;transition:.3s}
-.pcard.me{border-color:var(--gold-dim);background:#161208}
-.pcard.dead{opacity:.34;filter:grayscale(1)}
-.pcard.dead .pname{text-decoration:line-through}
-.pav{font-size:22px;line-height:1;width:26px;text-align:center}
-.pname{font-size:13px;color:var(--text)}
-.pstat{font-size:10px;color:var(--muted);letter-spacing:.08em}
-.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
-.log{flex:1;overflow-y:auto;padding:18px 20px;line-height:1.75;font-size:15px;scroll-behavior:smooth}
-.ll{margin-bottom:10px;animation:fadeIn .4s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.ll.night{color:#8fb0ff}
-.ll.day{color:var(--gold)}
-.ll.npc{color:#cfc7b4}
-.ll.npc b{color:#e8dfc6}
-.ll.eff{color:#9a94a8;font-style:italic;font-size:13.5px;padding-left:12px;border-left:2px solid #2a2a38}
-.ll.death{color:var(--blood-l);font-weight:bold}
-.ll.vote{color:#c9a227}
-.ll.sep{color:#2a2a38;letter-spacing:.2em;text-align:center;margin:14px 0}
-.ll.good{color:#5fbf7f}
-.ll.bad{color:#d94b4b}
-.ll.player{color:#ffe9a8;font-weight:bold}
-.actions{border-top:1px solid var(--line);padding:14px 16px;background:rgba(12,12,19,.9);
-  flex-shrink:0;max-height:50vh;overflow-y:auto}
-.choice{display:flex;gap:12px;width:100%;text-align:left;align-items:flex-start;
-  background:var(--panel);border:1px solid var(--line);color:var(--text);
-  padding:12px 14px;border-radius:8px;margin-bottom:9px;cursor:pointer;
-  font-family:inherit;font-size:14px;transition:.2s;line-height:1.5}
-.choice:hover{border-color:var(--gold-dim);background:#1d1a12;transform:translateX(3px)}
-.ckey{flex-shrink:0;width:24px;height:24px;border-radius:50%;
-  border:1px solid var(--gold-dim);color:var(--gold);
-  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold}
-.clabel{color:#e5ddc9;margin-bottom:3px}
-.cdesc{color:var(--muted);font-size:12px;line-height:1.45}
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px}
-.tbtn{background:var(--panel);border:1px solid var(--line);color:var(--text);
-  padding:12px 8px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
-  transition:.2s;display:flex;flex-direction:column;align-items:center;gap:5px}
-.tbtn:hover{border-color:var(--blood);background:#1e1214;box-shadow:0 0 16px rgba(160,32,32,.28)}
-.tbtn .tav{font-size:24px}
+/* Typography & UI */
+h1.title { font-size: clamp(32px, 8vw, 56px); color: var(--gold); letter-spacing: 2px; text-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+.subtitle { color: var(--muted); letter-spacing: 4px; font-size: 12px; margin-top: 5px; text-transform: uppercase; }
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); margin: 20px 0; }
+.lbl { display: block; text-align: left; font-size: 12px; color: var(--muted); margin: 15px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+.txt { width: 100%; padding: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font-size: 15px; outline: none; transition: 0.2s; }
+.txt:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
+textarea.txt { resize: vertical; min-height: 100px; }
+.btn { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--gold-dim); color: var(--gold); padding: 14px 20px; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; text-transform: uppercase; width: 100%; margin-top: 10px; }
+.btn:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-back { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; margin-top: 20px; }
+.btn-back:hover { color: var(--gold); }
+.mode-btn { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; text-align: left; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 12px; display: flex; align-items: center; gap: 15px; }
+.mode-btn:hover { border-color: var(--gold); background: var(--panel-2); transform: translateY(-2px); }
+.mode-icon { font-size: 32px; }
+.mode-title { font-size: 18px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+.mode-desc { font-size: 13px; color: var(--muted); }
+.av-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.av-opt { font-size: 28px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); cursor: pointer; transition: 0.2s; }
+.av-opt:hover { border-color: var(--gold); transform: scale(1.1); }
+.av-opt.on { border-color: var(--gold); background: var(--gold-dim); box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+.count-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.cbtn { background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+.cbtn:hover { border-color: var(--gold-dim); }
+.cbtn.on { background: var(--gold-dim); border-color: var(--gold); color: #fff; }
 
-/* OVERLAYS */
-.overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
-  background:rgba(4,4,8,.94);backdrop-filter:blur(4px);padding:20px}
-.overlay.hide{display:none}
-.roleCard{width:min(360px,92vw);padding:34px 26px;text-align:center;border-radius:14px;
-  background:linear-gradient(170deg,#1a1720,#0d0c12);border:1px solid var(--gold-dim);
-  box-shadow:0 0 60px rgba(201,162,39,.25),inset 0 0 60px rgba(0,0,0,.7);
-  animation:cardIn .8s cubic-bezier(.2,.9,.3,1)}
-@keyframes cardIn{0%{transform:rotateY(90deg) scale(.7);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
-.roleIcon{font-size:64px;margin-bottom:14px;filter:drop-shadow(0 0 22px currentColor)}
-.roleName{font-size:26px;letter-spacing:.14em;margin-bottom:12px}
-.roleTeam{font-size:11px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:18px}
-.roleDesc{color:#a8a294;line-height:1.8;font-size:14px;margin-bottom:26px}
-.defBox{width:min(440px,92vw);padding:26px 24px;border-radius:12px;
-  background:linear-gradient(170deg,#1a1720,#0d0c12);border:1px solid var(--gold-dim);
-  box-shadow:0 0 40px rgba(201,162,39,.2)}
-.defTitle{color:var(--gold);font-size:18px;letter-spacing:.1em;margin-bottom:8px}
-.defSub{color:var(--muted);font-size:12px;margin-bottom:14px;line-height:1.5}
-.defActions{display:flex;gap:10px;justify-content:center;margin-top:14px}
-.defActions .btnMain{padding:10px 26px;font-size:13px;margin:0}
+/* GAME SCREEN */
+.game-topbar { display: flex; align-items: center; gap: 10px; padding: 10px 15px; background: var(--panel); border-bottom: 1px solid var(--line); z-index: 20; }
+.brand { font-size: 16px; color: var(--gold); font-weight: 700; letter-spacing: 1px; }
+.phase-pill { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--panel-2); border: 1px solid var(--line); }
+body.night .phase-pill { color: #6b9eff; border-color: #334e80; }
+body.day .phase-pill { color: var(--gold); border-color: var(--gold-dim); }
+.role-mini { margin-left: auto; font-size: 12px; color: var(--muted); }
+.role-mini b { color: var(--gold); }
+.btn-exit { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.btn-exit:hover { border-color: var(--blood-light); color: var(--blood-light); }
 
-/* END */
-#s-end{align-items:center;justify-content:center;padding:24px;overflow-y:auto}
-.endInner{max-width:700px;width:100%;text-align:center}
-.endTitle{font-size:clamp(26px,6vw,44px);letter-spacing:.1em;margin-bottom:12px}
-.endSub{color:var(--muted);margin-bottom:26px;line-height:1.7}
-.revGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:9px;margin-bottom:28px}
-.revCard{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px;font-size:12px}
-.revCard .rname{color:var(--text);margin-bottom:3px;font-size:13px}
-.revCard .rrole{font-size:11px;letter-spacing:.06em}
-.revCard.wolf{border-color:#5c2020;background:#180e0e}
-.revCard.dead{opacity:.45}
+.game-layout { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 220px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar h3 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 15px 15px 10px; border-bottom: 1px solid var(--line); }
+.p-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.p-card { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; }
+.p-card.me { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+.p-card.dead { opacity: 0.5; filter: grayscale(1); }
+.p-card.dead .p-name { text-decoration: line-through; }
+.p-av { font-size: 20px; }
+.p-name { font-size: 14px; font-weight: 600; }
+.p-status { font-size: 10px; color: var(--muted); }
 
-@media(max-width:720px){
-  .sidebar{width:120px;padding:8px}
-  .pname{font-size:11px}
-  .pav{font-size:18px;width:20px}
-  .log{padding:12px;font-size:14px}
-  .brand{display:none}
-  .roleMini{font-size:10px}
+.chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+.chat-log { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease; word-wrap: break-word; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.msg.sys { align-self: center; background: transparent; color: var(--muted); font-size: 12px; text-align: center; font-style: italic; padding: 5px; }
+.msg.night { align-self: center; color: #6b9eff; background: rgba(107, 158, 255, 0.1); border: 1px solid rgba(107, 158, 255, 0.2); font-size: 13px; text-align: center; }
+.msg.day { align-self: center; color: var(--gold); background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.2); font-size: 13px; text-align: center; }
+.msg.npc { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); border-bottom-left-radius: 2px; }
+.msg.player { align-self: flex-end; background: rgba(212, 175, 55, 0.15); border: 1px solid var(--gold-dim); border-bottom-right-radius: 2px; }
+.msg.death { align-self: center; color: var(--blood-light); background: rgba(217, 75, 75, 0.1); border: 1px solid rgba(217, 75, 75, 0.2); font-weight: bold; }
+.msg .sender { font-size: 12px; color: var(--gold); font-weight: 600; margin-bottom: 4px; display: block; }
+
+.action-area { padding: 15px; background: var(--panel); border-top: 1px solid var(--line); max-height: 45vh; overflow-y: auto; }
+.choice-btn { display: flex; gap: 12px; align-items: flex-start; background: var(--panel-2); border: 1px solid var(--line); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; text-align: left; width: 100%; color: var(--text); }
+.choice-btn:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+.choice-key { background: var(--gold-dim); color: #fff; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; font-weight: bold; flex-shrink: 0; }
+.choice-text b { display: block; font-size: 14px; margin-bottom: 3px; }
+.choice-text span { font-size: 12px; color: var(--muted); }
+.target-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.target-btn { background: var(--panel-2); border: 1px solid var(--line); padding: 15px 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s; color: var(--text); }
+.target-btn:hover { border-color: var(--blood-light); background: rgba(217, 75, 75, 0.1); }
+.target-btn .t-av { font-size: 28px; }
+.target-btn .t-name { font-size: 13px; font-weight: 600; }
+
+/* Overlays */
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.overlay.hide { display: none; }
+.modal { background: var(--panel); border: 1px solid var(--gold-dim); border-radius: 16px; padding: 25px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.role-icon { font-size: 64px; margin-bottom: 15px; filter: drop-shadow(0 0 15px currentColor); }
+.role-name { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+.role-team { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+.role-desc { font-size: 14px; line-height: 1.6; color: #b0a89a; margin-bottom: 20px; }
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .game-layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; max-height: 120px; border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+  .sidebar h3 { display: none; }
+  .p-list { flex-direction: row; padding: 8px; }
+  .p-card { flex-direction: column; padding: 8px; min-width: 70px; text-align: center; gap: 4px; }
+  .p-name { font-size: 12px; }
+  .p-status { display: none; }
+  .action-area { max-height: 40vh; }
+  .target-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .target-btn { padding: 10px 5px; }
+  .target-btn .t-av { font-size: 24px; }
+  .target-btn .t-name { font-size: 11px; }
 }
 </style>
 </head>
 <body class="night">
-<div id="fog"></div>
-<div id="vig"></div>
 
-<!-- ====== LOGIN ====== -->
-<div id="s-login" class="screen on"><div class="inner">
-  <h1 class="title">MA SÓI</h1>
-  <div class="subtitle">Lời Nói Dối Cuối Cùng</div>
-  <div class="divider"></div>
-  <label class="lbl">Tên của bạn</label>
-  <input id="inName" class="txt" maxlength="16" placeholder="Nhập tên..."/>
-  <label class="lbl">Hình đại diện</label>
-  <div id="avRow" class="avRow"></div>
-  <button id="btnLogin" class="btnMain">Vào làng</button>
-  <div class="hint">Mỗi đêm một người chết. Không ai hoàn toàn đáng tin.</div>
-</div></div>
+<!-- ====== SCREENS ====== -->
 
-<!-- ====== MENU ====== -->
-<div id="s-menu" class="screen"><div class="inner">
-  <div class="hello">Chào mừng, <b><span id="mAv"></span> <span id="mName"></span></b></div>
-  <h2 class="title" style="font-size:24px">CHỌN CHẾ ĐỘ</h2>
-  <div class="divider"></div>
-  <button id="btnBot" class="modeBtn">
-    <div class="modeTitle">🤖 Chơi với Bot</div>
-    <div class="modeDesc">Đấu trí với dàn NPC có tính cách, ký ức và chiến thuật riêng.</div>
-  </button>
-  <button id="btnOnline" class="modeBtn">
-    <div class="modeTitle">🌐 Chơi Online với bạn bè</div>
-    <div class="modeDesc">Tạo phòng, chia sẻ mã, chơi cùng nhau qua Internet. Tự động thêm Bot.</div>
-  </button>
-  <button id="btnFriends" class="modeBtn">
-    <div class="modeTitle">👥 Bạn bè</div>
-    <div class="modeDesc">Quản lý danh sách bạn bè và lời mời kết bạn.</div>
-  </button>
-  <button class="btnBack" id="btnLogout">← Đăng xuất</button>
-</div></div>
-
-<!-- ====== FRIENDS ====== -->
-<div id="s-friends" class="screen"><div class="inner">
-  <h2 class="title" style="font-size:24px">BẠN BÈ</h2>
-  <div class="divider"></div>
-  <div id="friendList" class="lobbyList"></div>
-  <div style="display:flex;gap:10px;margin-top:16px">
-    <input id="inFriendName" class="txt" placeholder="Nhập tên bạn bè..." style="flex:1"/>
-    <button id="btnAddFriend" class="btnMain" style="margin-top:0;padding:10px 20px">Thêm</button>
+<div id="s-login" class="screen center-screen on">
+  <div class="inner">
+    <h1 class="title">MA SÓI</h1>
+    <div class="subtitle">Lời Nói Dối Cuối Cùng</div>
+    <div class="divider"></div>
+    <label class="lbl">Tên của bạn</label>
+    <input id="inName" class="txt" maxlength="12" placeholder="Nhập tên...">
+    <label class="lbl">Ảnh đại diện</label>
+    <div id="avRow" class="av-row"></div>
+    <button id="btnLogin" class="btn" style="margin-top:25px">Vào Làng</button>
   </div>
-  <button class="btnBack" data-back="menu" style="margin-top:24px">← Quay lại</button>
-</div></div>
+</div>
 
-<!-- ====== BOT SETUP ====== -->
-<div id="s-bot" class="screen"><div class="inner">
-  <h2 class="title" style="font-size:24px">CHƠI VỚI BOT</h2>
-  <div class="divider"></div>
-  <p class="muted">Chọn tổng số người trong ván (bạn + bot):</p>
-  <div class="countRow" id="botCountRow"></div>
-  <button id="btnStartBot" class="btnMain">Chia bài &amp; bắt đầu</button>
-  <button class="btnBack" data-back="menu">← Quay lại</button>
-</div></div>
-
-<!-- ====== ONLINE SETUP ====== -->
-<div id="s-online" class="screen"><div class="inner">
-  <h2 class="title" style="font-size:24px">CHƠI ONLINE</h2>
-  <div class="divider"></div>
-  <button id="btnCreate" class="btnMain">Tạo phòng mới</button>
-  <div class="divider"></div>
-  <label class="lbl">Hoặc nhập mã phòng</label>
-  <input id="inCode" class="txt" maxlength="6" placeholder="MÃ PHÒNG"
-    style="text-transform:uppercase;text-align:center;letter-spacing:.3em;font-size:20px"/>
-  <button id="btnJoin" class="btnMain">Tham gia</button>
-  <button class="btnBack" data-back="menu">← Quay lại</button>
-  <div class="hint">ⓘ Chủ phòng tạo mã, gửi mã cho bạn bè. Bạn bè nhập mã để vào. Hỗ trợ xuyên mạng 4G/Wifi.</div>
-</div></div>
-
-<!-- ====== LOBBY ====== -->
-<div id="s-lobby" class="screen"><div class="inner">
-  <h2 class="title" style="font-size:24px">PHÒNG CHỜ</h2>
-  <div class="divider"></div>
-  <div class="codeRow">Mã phòng: <b id="codeDisp">------</b></div>
-  <div id="lobbyList" class="lobbyList"></div>
-  <div id="hostCtrl" style="display:none">
-    <label class="lbl" style="text-align:center">Tổng số người (bot sẽ lấp đầy)</label>
-    <div class="countRow" id="lobbyCountRow"></div>
-    <button id="btnStartOnline" class="btnMain" disabled>Bắt đầu ván</button>
-    <button id="btnCopyInvite" class="btnBack" style="margin-top:8px; font-size:14px; color:var(--gold)">📋 Copy Link Mời</button>
+<div id="s-menu" class="screen center-screen">
+  <div class="inner">
+    <div style="font-size: 14px; color: var(--muted); margin-bottom: 20px;">
+      Chào mừng, <b style="color:var(--gold)"><span id="mAv"></span> <span id="mName"></span></b>
+    </div>
+    <h1 class="title" style="font-size:24px">CHỌN CHẾ ĐỘ</h1>
+    <div class="divider"></div>
+    <button id="btnBot" class="mode-btn">
+      <div class="mode-icon">🤖</div>
+      <div><div class="mode-title">Chơi với Bot</div><div class="mode-desc">Đấu trí với dàn NPC thông minh</div></div>
+    </button>
+    <button id="btnOnline" class="mode-btn">
+      <div class="mode-icon">🌐</div>
+      <div><div class="mode-title">Chơi Online</div><div class="mode-desc">Tạo phòng và mời bạn bè</div></div>
+    </button>
+    <button id="btnFriends" class="mode-btn">
+      <div class="mode-icon">👥</div>
+      <div><div class="mode-title">Danh sách bạn bè</div><div class="mode-desc">Quản lý lời mời kết bạn</div></div>
+    </button>
+    <button id="btnLogout" class="btn-back">← Đăng xuất</button>
   </div>
-  <div id="clientHint" class="muted" style="display:none">Đang chờ chủ phòng bắt đầu...</div>
-  <button class="btnBack" id="btnLeave">← Rời phòng</button>
-</div></div>
+</div>
 
-<!-- ====== DEALING ====== -->
-<div id="s-dealing" class="screen"><div class="dealBox">
-  <div class="dealTitle">ĐANG CHIA BÀI</div>
-  <div class="cardsRow" id="cardsRow"></div>
-  <div class="dealText" id="dealText"></div>
-</div></div>
+<div id="s-friends" class="screen center-screen">
+  <div class="inner">
+    <h1 class="title" style="font-size:24px">BẠN BÈ</h1>
+    <div class="divider"></div>
+    <div id="friendList" style="max-height: 300px; overflow-y: auto; text-align: left; margin-bottom: 15px;"></div>
+    <div style="display:flex; gap:10px;">
+      <input id="inFriendName" class="txt" placeholder="Tên bạn bè..." style="flex:1">
+      <button id="btnAddFriend" class="btn" style="width:auto; margin:0; padding:0 20px;">Thêm</button>
+    </div>
+    <button class="btn-back" data-back="menu">← Quay lại</button>
+  </div>
+</div>
 
-<!-- ====== GAME ====== -->
+<div id="s-bot" class="screen center-screen">
+  <div class="inner">
+    <h1 class="title" style="font-size:24px">CHƠI VỚI BOT</h1>
+    <div class="divider"></div>
+    <label class="lbl">Tổng số người chơi</label>
+    <div class="count-row" id="botCountRow"></div>
+    <button id="btnStartBot" class="btn" style="margin-top:30px">Bắt đầu ván</button>
+    <button class="btn-back" data-back="menu">← Quay lại</button>
+  </div>
+</div>
+
+<div id="s-online" class="screen center-screen">
+  <div class="inner">
+    <h1 class="title" style="font-size:24px">CHƠI ONLINE</h1>
+    <div class="divider"></div>
+    <button id="btnCreate" class="btn">Tạo phòng mới</button>
+    <div style="margin: 20px 0; color: var(--muted);">Hoặc</div>
+    <input id="inCode" class="txt" maxlength="6" placeholder="MÃ PHÒNG" style="text-align:center; text-transform:uppercase; letter-spacing:4px; font-size:20px;">
+    <button id="btnJoin" class="btn">Tham gia</button>
+    <button class="btn-back" data-back="menu">← Quay lại</button>
+  </div>
+</div>
+
+<div id="s-lobby" class="screen center-screen">
+  <div class="inner">
+    <h1 class="title" style="font-size:24px">PHÒNG CHỜ</h1>
+    <div style="color:var(--gold); font-size:24px; font-weight:bold; letter-spacing:5px; margin:15px 0;" id="codeDisp">------</div>
+    <div id="lobbyList" style="min-height:100px; margin-bottom:15px;"></div>
+    
+    <div id="hostCtrl" style="display:none;">
+      <label class="lbl" style="text-align:center;">Tổng số người (Bot tự lấp)</label>
+      <div class="count-row" id="lobbyCountRow"></div>
+      <button id="btnStartOnline" class="btn" style="margin-top:20px">Bắt đầu</button>
+      <button id="btnCopyInvite" class="btn-back" style="color:var(--gold); margin-top:10px">📋 Copy Link Mời</button>
+    </div>
+    
+    <div id="clientHint" style="display:none; color:var(--muted); margin:20px 0;">Đang chờ chủ phòng bắt đầu...</div>
+    <button class="btn-back" id="btnLeave">← Rời phòng</button>
+  </div>
+</div>
+
+<!-- GAME INTERFACE -->
 <div id="s-game" class="screen">
-  <div class="topbar">
+  <div class="game-topbar">
     <div class="brand">🐺 MA SÓI</div>
-    <div class="pill" id="pill">ĐÊM 1</div>
-    <div class="roleMini" id="roleMini"></div>
-    <button id="btnExitGame" class="btnExit">Thoát</button>
+    <div class="phase-pill" id="pill">ĐÊM 1</div>
+    <div class="role-mini" id="roleMini">Vai trò: <b>...</b></div>
+    <button id="btnExitGame" class="btn-exit">Thoát</button>
   </div>
-  <div class="body">
-    <aside class="sidebar"><h3>Dân Làng</h3><div id="pList"></div></aside>
-    <main class="main">
-      <div class="log" id="log"></div>
-      <div class="actions" id="actions"></div>
-    </main>
-  </div>
-</div>
-
-<!-- ====== END ====== -->
-<div id="s-end" class="screen"><div class="endInner">
-  <h1 class="endTitle" id="endTitle"></h1>
-  <p class="endSub" id="endSub"></p>
-  <div class="revGrid" id="revGrid"></div>
-  <button class="btnMain" id="btnAgain">Về menu</button>
-</div></div>
-
-<!-- ====== ROLE OVERLAY ====== -->
-<div class="overlay hide" id="roleOv">
-  <div class="roleCard">
-    <div class="roleIcon" id="roleIcon">🐺</div>
-    <div class="roleName" id="roleName"></div>
-    <div class="roleTeam" id="roleTeam"></div>
-    <div class="roleDesc" id="roleDesc"></div>
-    <button class="btnMain" id="btnRoleOk" style="padding:12px 34px;font-size:14px">Đã hiểu</button>
-  </div>
-</div>
-
-<!-- ====== DEFENSE OVERLAY ====== -->
-<div class="overlay hide" id="defOv">
-  <div class="defBox">
-    <div class="defTitle" id="defTitle">Biện minh của bạn</div>
-    <div class="defSub" id="defSub">Mỗi ngày bạn có một lần lên tiếng. Hãy nói điều có sức nặng.</div>
-    <textarea id="defText" class="txt" rows="4" maxlength="240" placeholder="Nhập lời biện minh..."></textarea>
-    <div class="defActions">
-      <button id="btnDefSend" class="btnMain">Gửi</button>
-      <button id="btnDefPass" class="btnBack" style="margin:0">Bỏ qua</button>
+  
+  <div class="game-layout">
+    <div class="sidebar">
+      <h3>Dân Làng</h3>
+      <div class="p-list" id="pList"></div>
+    </div>
+    
+    <div class="chat-area">
+      <div class="chat-log" id="chatLog"></div>
+      <div class="action-area" id="actionArea"></div>
     </div>
   </div>
 </div>
 
-<!-- ====== FRIEND REQUEST OVERLAY ====== -->
-<div class="overlay hide" id="friendReqOv">
-  <div class="defBox">
-    <div class="defTitle">Lời mời kết bạn</div>
-    <div class="defSub" id="friendReqSub">Ai đó muốn kết bạn với bạn.</div>
-    <div class="defActions">
-      <button id="btnFReqAccept" class="btnMain">Đồng ý</button>
-      <button id="btnFReqReject" class="btnBack" style="margin:0">Từ chối</button>
+<div id="s-end" class="screen center-screen">
+  <div class="inner">
+    <h1 id="endTitle" class="title" style="font-size:28px;"></h1>
+    <p id="endSub" style="color:var(--muted); margin:10px 0 20px; line-height:1.6;"></p>
+    <div id="revGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin-bottom:20px; text-align:left;"></div>
+    <button id="btnAgain" class="btn">Về Menu</button>
+  </div>
+</div>
+
+<!-- OVERLAYS -->
+<div id="roleOv" class="overlay hide">
+  <div class="modal">
+    <div class="role-icon" id="roleIcon">🐺</div>
+    <div class="role-name" id="roleName"></div>
+    <div class="role-team" id="roleTeam"></div>
+    <div class="role-desc" id="roleDesc"></div>
+    <button id="btnRoleOk" class="btn">Đã hiểu</button>
+  </div>
+</div>
+
+<div id="defOv" class="overlay hide">
+  <div class="modal">
+    <div class="role-name" style="font-size:20px; color:var(--gold); margin-bottom:10px;">Biện Minh</div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">Hãy nói điều gì đó để bảo vệ bản thân. Lời nói của bạn sẽ ảnh hưởng đến nghi ngờ của người khác.</p>
+    <textarea id="defText" class="txt" maxlength="200" placeholder="Nhập lời biện minh..."></textarea>
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button id="btnDefPass" class="btn-back" style="flex:1; margin:0; padding:12px; border:1px solid var(--line); border-radius:8px;">Bỏ qua</button>
+      <button id="btnDefSend" class="btn" style="flex:2; margin:0;">Gửi</button>
+    </div>
+  </div>
+</div>
+
+<div id="friendReqOv" class="overlay hide">
+  <div class="modal">
+    <div class="role-name" style="font-size:20px; color:var(--gold); margin-bottom:10px;">Lời mời kết bạn</div>
+    <p id="friendReqSub" style="margin-bottom:20px;"></p>
+    <div style="display:flex; gap:10px;">
+      <button id="btnFReqReject" class="btn-back" style="flex:1; margin:0; padding:12px; border:1px solid var(--line); border-radius:8px;">Từ chối</button>
+      <button id="btnFReqAccept" class="btn" style="flex:1; margin:0;">Đồng ý</button>
     </div>
   </div>
 </div>
 
 <script>
-/* =========================================================
-   HELPERS
-========================================================= */
-const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
-const el=id=>document.getElementById(id);
-const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
-const pick=a=>a[rnd(0,a.length-1)];
+/* =========================================
+   CONSTANTS & HELPERS
+========================================= */
+const AVATARS = ['🧔','👩‍🦳','👩','🧑','👨‍🦰','👩‍🦰','🧑‍🦱','👩‍🦱','👴','👧','🧑‍🦲','👵'];
+const BOT_NAMES = ['Lão Trác','Bà Hạnh','Cô Liên','Anh Khoa','Chú Bảy','Thím Đào','Cậu Tú','Cô Mai','Ông Hải','Bé Na','Anh Dũng','Bà Cẩm'];
 
-let audioCtx=null;
-function beep(f=440,d=.08,t='sine',v=.04){
-  try{
-    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    if(audioCtx.state==='suspended') audioCtx.resume();
-    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.type=t;o.frequency.value=f;
-    g.gain.setValueAtTime(v,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+d);
-    o.connect(g);g.connect(audioCtx.destination);
-    o.start();o.stop(audioCtx.currentTime+d);
-  }catch(e){}
-}
-
-/* =========================================================
-   DATA
-========================================================= */
-const AVATARS=['🧔','👩‍🦳','👩','🧑','👨‍🦰','👩‍🦰','🧑‍🦱','👩‍🦱','👴','👧','🧑‍🦲','👵'];
-const BOT_NAMES=['Lão Trác','Bà Hạnh','Cô Liên','Anh Khoa','Chú Bảy','Thím Đào','Cậu Tú','Cô Mai','Ông Hải','Bé Na','Anh Dũng','Bà Cẩm'];
-
-const ROLES={
-  wolf:{name:'Ma Sói',team:'wolf',icon:'🐺',color:'#c0392b',teamName:'Phe Bóng Tối',
-    desc:'Mỗi đêm, ngươi cùng bầy chọn một người để sát hại. Ban ngày, hãy giả vờ là dân làng vô tội.'},
-  whitewolf:{name:'Sói Trắng',team:'wolf',icon:'🌕',color:'#e8e8f0',teamName:'Phe Bóng Tối',
-    desc:'Ngươi là Sói, nhưng có mục tiêu riêng. Một lần duy nhất, ngươi có thể giết một con Sói khác trong đêm.'},
-  traitor:{name:'Kẻ Phản Bội',team:'wolf',icon:'🗡️',color:'#9b59b6',teamName:'Phe Bóng Tối',
-    desc:'Ngươi thuộc phe Sói. Nhưng Tiên Tri sẽ thấy ngươi là Dân Làng. Hãy lợi dụng điều đó.'},
-  villager:{name:'Dân Làng',team:'village',icon:'🌾',color:'#8d9aa8',teamName:'Phe Ánh Sáng',
-    desc:'Ngươi không có năng lực ban đêm. Vũ khí duy nhất là lý trí và sự quan sát.'},
-  seer:{name:'Tiên Tri',team:'village',icon:'🔮',color:'#8e44ad',teamName:'Phe Ánh Sáng',
-    desc:'Mỗi đêm, ngươi soi một người để biết họ thuộc phe nào. Sói sẽ săn ngươi nếu biết.'},
-  guard:{name:'Bảo Vệ',team:'village',icon:'🛡️',color:'#2980b9',teamName:'Phe Ánh Sáng',
-    desc:'Mỗi đêm, ngươi chọn một người để bảo vệ. Không thể bảo vệ cùng một người hai đêm liên tiếp.'},
-  witch:{name:'Phù Thủy',team:'village',icon:'🧪',color:'#16a085',teamName:'Phe Ánh Sáng',
-    desc:'Một bình cứu (hồi sinh người bị Sói cắn) và một bình độc (giết một người). Mỗi loại dùng một lần.'},
-  hunter:{name:'Thợ Săn',team:'village',icon:'🏹',color:'#d35400',teamName:'Phe Ánh Sáng',
-    desc:'Khi chết, ngươi có thể bắn hạ một người theo cùng.'},
-  cupid:{name:'Cupid',team:'village',icon:'💘',color:'#e84393',teamName:'Phe Ánh Sáng',
-    desc:'Đêm đầu tiên, ngươi ghép hai người thành tình nhân. Nếu một người chết, người kia cũng chết theo.'},
-  fool:{name:'Kẻ Ngốc',team:'neutral',icon:'🤡',color:'#f39c12',teamName:'Phe Trung Lập',
-    desc:'Nếu bị cả làng bỏ phiếu treo cổ, ngươi lật bài, sống sót — và chiến thắng ngay lập tức.'}
+const ROLES = {
+  wolf: { name: 'Ma Sói', team: 'wolf', icon: '🐺', color: '#d94b4b', teamName: 'Bóng Tối', desc: 'Mỗi đêm, cùng bầy chọn một người để sát hại. Ban ngày, hãy giả vờ vô tội.' },
+  whitewolf: { name: 'Sói Trắng', team: 'wolf', icon: '🌕', color: '#e8e8f0', teamName: 'Bóng Tối', desc: 'Là Sói nhưng có mục tiêu riêng. Một lần duy nhất, ngươi có thể giết một con Sói khác trong đêm.' },
+  villager: { name: 'Dân Làng', team: 'village', icon: '🌾', color: '#8d9aa8', teamName: 'Ánh Sáng', desc: 'Không có năng lực đặc biệt. Sử dụng lý trí để tìm ra Sói.' },
+  seer: { name: 'Tiên Tri', team: 'village', icon: '🔮', color: '#9b59b6', teamName: 'Ánh Sáng', desc: 'Mỗi đêm, soi một người để biết họ là Sói hay Dân.' },
+  guard: { name: 'Bảo Vệ', team: 'village', icon: '🛡️', color: '#3498db', teamName: 'Ánh Sáng', desc: 'Mỗi đêm, chọn một người để bảo vệ khỏi nanh vuốt của Sói.' },
+  witch: { name: 'Phù Thủy', team: 'village', icon: '🧪', color: '#1abc9c', teamName: 'Ánh Sáng', desc: 'Có 1 bình cứu (cứu người bị Sói cắn) và 1 bình độc (giết người). Mỗi loại dùng 1 lần.' },
+  hunter: { name: 'Thợ Săn', team: 'village', icon: '🏹', color: '#e67e22', teamName: 'Ánh Sáng', desc: 'Khi chết, có thể bắn hạ một người theo cùng.' },
+  cupid: { name: 'Cupid', team: 'village', icon: '💘', color: '#e84393', teamName: 'Ánh Sáng', desc: 'Đêm đầu tiên, ghép hai người thành tình nhân. Nếu một người chết, người kia cũng chết.' },
+  fool: { name: 'Kẻ Ngốc', team: 'neutral', icon: '🤡', color: '#f39c12', teamName: 'Trung Lập', desc: 'Nếu bị vote treo cổ, ngươi lật bài, sống sót và chiến thắng ngay lập tức.' }
 };
 
-/* Giới hạn Sói (2-3) */
-const COMP={
-  8:['wolf','wolf','seer','guard','witch','villager','villager','villager'],
-  9:['wolf','wolf','seer','guard','witch','hunter','villager','villager','villager'],
+const COMP = {
+  8: ['wolf','wolf','seer','guard','witch','villager','villager','villager'],
+  9: ['wolf','wolf','seer','guard','witch','hunter','villager','villager','villager'],
   10:['wolf','wolf','wolf','seer','guard','witch','hunter','villager','villager','villager'],
   11:['wolf','wolf','wolf','seer','guard','witch','hunter','cupid','villager','villager','villager'],
   12:['wolf','wolf','whitewolf','seer','guard','witch','hunter','cupid','fool','villager','villager','villager']
 };
 
-/* =========================================================
-   STATE
-========================================================= */
-const APP={
-  user:null, role:null, roomCode:null,
-  peer:null, conn:null, peerConns:{},
-  myId:null, uuid:'u'+Math.random().toString(36).slice(2)+Date.now(),
-  myRole:null, lobbyPlayers:[], maxPlayers:8,
-  onRoleOk:null, readyCount:0, totalHumans:0, peerReady:false
+const isWolf = p => p.role === 'wolf' || p.role === 'whitewolf';
+const seerView = p => isWolf(p) ? 'wolf' : 'village';
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const el = id => document.getElementById(id);
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = a => a[rnd(0, a.length-1)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function beep(f=440, d=0.1, t='sine', v=0.05) {
+  try {
+    if(!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(window.audioCtx.state === 'suspended') window.audioCtx.resume();
+    const o = window.audioCtx.createOscillator(), g = window.audioCtx.createGain();
+    o.type = t; o.frequency.value = f;
+    g.gain.setValueAtTime(v, window.audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + d);
+    o.connect(g); g.connect(window.audioCtx.destination);
+    o.start(); o.stop(window.audioCtx.currentTime + d);
+  } catch(e){}
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  if (id) el(id).classList.add('on');
+}
+
+/* =========================================
+   APP & GAME STATE
+========================================= */
+const APP = {
+  user: null, role: null, roomCode: null, peer: null, conn: null, peerConns: {},
+  myId: null, uuid: 'u' + Math.random().toString(36).slice(2) + Date.now(),
+  myRole: null, lobbyPlayers: [], maxPlayers: 8, peerReady: false, onRoleOk: null, readyCount: 0
 };
 
-const G={
-  players:[], day:1, phase:'menu', over:false,
-  nightKill:null, nightHeal:null, nightPoison:null,
-  guardTarget:null, guardLast:null,
-  lovers:[], witchHealUsed:false, witchPoisonUsed:false, whiteWolfUsed:false,
-  playerCount:8
+const G = {
+  players: [], day: 1, phase: 'menu', over: false,
+  nightKill: null, nightHeal: null, nightPoison: null, lastNightKill: null,
+  guardTarget: null, guardLast: null, lovers: [],
+  witchHealUsed: false, witchPoisonUsed: false, whiteWolfUsed: false,
+  playerCount: 8
 };
 
-const isWolf=p=>p.role==='wolf'||p.role==='whitewolf'||p.role==='traitor';
-const seerView=p=>p.role==='traitor'?'village':(isWolf(p)?'wolf':'village');
+/* =========================================
+   CHAT LOGGING
+========================================= */
+function addLog(html, type='sys') {
+  const box = el('chatLog');
+  const d = document.createElement('div');
+  d.className = `msg ${type}`;
+  d.innerHTML = html;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+function bLog(html, type='sys') {
+  addLog(html, type);
+  if (APP.role === 'host') {
+    APP.peerConns && Object.values(APP.peerConns).forEach(c => {
+      if (c.open) c.send({ t: 'log', html, type });
+    });
+  }
+}
 
-/* =========================================================
-   FRIENDS SYSTEM
-========================================================= */
+/* =========================================
+   FRIEND SYSTEM
+========================================= */
 let pendingFriendReq = null;
 
-function getFriends(){
-  try{ return JSON.parse(localStorage.getItem('masoi_friends')||'[]'); }
-  catch(e){ return []; }
-}
-function saveFriends(list){
-  localStorage.setItem('masoi_friends', JSON.stringify(list));
-}
-function addFriend(name, avatar, uuid){
+function getFriends() { try { return JSON.parse(localStorage.getItem('masoi_friends') || '[]'); } catch(e) { return []; } }
+function saveFriends(list) { localStorage.setItem('masoi_friends', JSON.stringify(list)); }
+function addFriend(name, avatar, uuid) {
   const list = getFriends();
-  if(list.find(f=>f.name===name)){
-    // Cập nhật uuid nếu đã có
-    const idx = list.findIndex(f=>f.name===name);
-    if(uuid) list[idx].uuid = uuid;
-    saveFriends(list);
-    return;
+  const existing = list.find(f => f.name === name);
+  if (existing) {
+    if (uuid) existing.uuid = uuid;
+  } else {
+    list.push({ name, avatar, uuid });
   }
-  list.push({name, avatar, uuid});
   saveFriends(list);
 }
-function renderFriends(){
+
+function renderFriends() {
   const list = getFriends();
-  const elList = el('friendList');
-  elList.innerHTML = '';
-  if(!list.length){
-    elList.innerHTML = '<div class="muted">Chưa có bạn bè nào. Hãy vào ván đấu và gửi lời mời!</div>';
+  const box = el('friendList');
+  box.innerHTML = '';
+  if (!list.length) {
+    box.innerHTML = '<div style="color:var(--muted); font-size:13px;">Chưa có bạn bè.</div>';
     return;
   }
-  list.forEach(f=>{
+  list.forEach(f => {
     const d = document.createElement('div');
-    d.className = 'lobbyItem';
-    d.innerHTML = `<div class="lav">${f.avatar}</div><div class="lname">${f.name}</div>
-      <button style="margin-left:auto;background:transparent;border:none;color:var(--blood-l);cursor:pointer;font-size:12px" onclick="removeFriend('${f.name}')">Xóa</button>`;
-    elList.appendChild(d);
+    d.style = 'display:flex; align-items:center; padding:10px; background:var(--panel-2); border-radius:8px; margin-bottom:8px;';
+    d.innerHTML = `<div style="font-size:20px; margin-right:10px;">${f.avatar}</div>
+      <div style="flex:1; font-size:14px; font-weight:600;">${f.name}</div>
+      <button onclick="removeFriend('${f.name}')" style="background:transparent; border:none; color:var(--blood-light); cursor:pointer; font-size:12px;">Xóa</button>`;
+    box.appendChild(d);
   });
 }
-window.removeFriend = (name) => {
-  let list = getFriends().filter(f=>f.name!==name);
-  saveFriends(list);
-  renderFriends();
-};
+window.removeFriend = name => { saveFriends(getFriends().filter(f => f.name !== name)); renderFriends(); };
 
-function sendFriendRequest(targetUuid, targetName){
-  const packet = {t:'friend_req', from: {name: APP.user.name, avatar: APP.user.avatar, uuid: APP.uuid}};
-  if(APP.role === 'solo') return;
-  
-  if(APP.role === 'host'){
-    sendTo(targetUuid, packet);
-  } else if(APP.role === 'client'){
-    APP.conn.send({t:'relay', to: targetUuid, msg: packet});
+function sendFriendReq(targetUuid, targetName) {
+  if (!targetUuid) return alert('Không thể kết bạn với Bot hoặc người chơi Offline.');
+  const packet = { t: 'friend_req', from: { name: APP.user.name, avatar: APP.user.avatar, uuid: APP.uuid } };
+  if (APP.role === 'host') {
+    const conn = APP.peerConns[targetUuid];
+    if (conn && conn.open) conn.send(packet);
+  } else if (APP.role === 'client') {
+    APP.conn.send({ t: 'relay', to: targetUuid, msg: packet });
   }
   alert('Đã gửi lời mời kết bạn đến ' + targetName);
 }
 
-function sendFriendAccept(targetUuid){
-  const packet = {t:'friend_acc', from: {name: APP.user.name, avatar: APP.user.avatar, uuid: APP.uuid}};
-  if(APP.role === 'host'){
-    sendTo(targetUuid, packet);
-  } else if(APP.role === 'client'){
-    APP.conn.send({t:'relay', to: targetUuid, msg: packet});
-  }
-}
-
-function showFriendRequest(from){
+function showFriendReq(from) {
   pendingFriendReq = from;
   el('friendReqSub').textContent = `${from.name} muốn kết bạn với bạn.`;
   el('friendReqOv').classList.remove('hide');
-  beep(600, 0.2, 'sine', 0.05);
+  beep(600, 0.2);
 }
-
 el('btnFReqAccept').onclick = () => {
-  if(pendingFriendReq){
+  if (pendingFriendReq) {
     addFriend(pendingFriendReq.name, pendingFriendReq.avatar, pendingFriendReq.uuid);
-    sendFriendAccept(pendingFriendReq.uuid);
+    const packet = { t: 'friend_acc', from: { name: APP.user.name, avatar: APP.user.avatar, uuid: APP.uuid } };
+    if (APP.role === 'host') { const c = APP.peerConns[pendingFriendReq.uuid]; if(c&&c.open) c.send(packet); }
+    else if (APP.role === 'client') { APP.conn.send({ t: 'relay', to: pendingFriendReq.uuid, msg: packet }); }
     alert('Đã chấp nhận kết bạn với ' + pendingFriendReq.name);
   }
   el('friendReqOv').classList.add('hide');
   pendingFriendReq = null;
 };
-el('btnFReqReject').onclick = () => {
-  el('friendReqOv').classList.add('hide');
-  pendingFriendReq = null;
+el('btnFReqReject').onclick = () => { el('friendReqOv').classList.add('hide'); pendingFriendReq = null; };
+
+/* =========================================
+   INIT UI
+========================================= */
+(function initUI(){
+  const row = el('avRow');
+  AVATARS.slice(0,8).forEach((a, i) => {
+    const b = document.createElement('button');
+    b.className = 'av-opt' + (i===0 ? ' on' : '');
+    b.textContent = a;
+    b.onclick = () => { row.querySelectorAll('.av-opt').forEach(x => x.classList.remove('on')); b.classList.add('on'); APP._av = a; };
+    row.appendChild(b);
+  });
+  APP._av = AVATARS[0];
+  const saved = localStorage.getItem('masoi_user');
+  if (saved) {
+    try {
+      const u = JSON.parse(saved);
+      el('inName').value = u.name || '';
+      if (u.avatar) { APP._av = u.avatar; row.querySelectorAll('.av-opt').forEach(x => x.classList.toggle('on', x.textContent === u.avatar)); }
+    } catch(e){}
+  }
+  el('btnLogin').onclick = () => {
+    const n = (el('inName').value || '').trim() || ('Người ' + rnd(100,999));
+    APP.user = { name: n.slice(0,12), avatar: APP._av };
+    localStorage.setItem('masoi_user', JSON.stringify(APP.user));
+    el('mName').textContent = APP.user.name;
+    el('mAv').textContent = APP.user.avatar;
+    showScreen('s-menu');
+    beep(600, 0.1);
+  };
+})();
+
+document.querySelectorAll('[data-back="menu"]').forEach(b => b.onclick = () => showScreen('s-menu'));
+el('btnLogout').onclick = () => { APP.user = null; localStorage.removeItem('masoi_user'); showScreen('s-login'); };
+el('btnFriends').onclick = () => { renderFriends(); showScreen('s-friends'); };
+el('btnAddFriend').onclick = () => {
+  const n = el('inFriendName').value.trim();
+  if (n) { addFriend(n, '🧑', null); el('inFriendName').value = ''; renderFriends(); alert('Đã thêm bạn!'); }
 };
 
-/* =========================================================
-   SCREEN
-========================================================= */
-function showScreen(n){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
-  const s=el('s-'+n); if(s) s.classList.add('on');
+// Bot Setup
+(function initBotCounts(){
+  const row = el('botCountRow');
+  for (let n = 8; n <= 12; n++) {
+    const b = document.createElement('button');
+    b.className = 'cbtn' + (n===8 ? ' on' : '');
+    b.textContent = n + ' người';
+    b.onclick = () => { row.querySelectorAll('.cbtn').forEach(x => x.classList.remove('on')); b.classList.add('on'); G.playerCount = n; };
+    row.appendChild(b);
+  }
+})();
+el('btnBot').onclick = () => showScreen('s-bot');
+el('btnOnline').onclick = () => showScreen('s-online');
+
+/* =========================================
+   GAME START LOGIC
+========================================= */
+el('btnStartBot').onclick = async () => {
+  APP.role = 'solo';
+  APP.myId = 0;
+  const humans = [{ id: 0, uuid: APP.uuid, name: APP.user.name, avatar: APP.user.avatar, isHost: true }];
+  const bots = makeBots(G.playerCount - 1);
+  G.players = buildPlayers(humans, bots);
+  assignRoles(G.players);
+  
+  showScreen('s-game');
+  el('chatLog').innerHTML = '';
+  renderPlayers();
+  setPhase('night');
+  el('roleMini').innerHTML = `Vai trò: <b>${ROLES[G.players[0].role].name}</b>`;
+  showRoleReveal(G.players[0].role);
+  
+  APP.onRoleOk = () => {
+    el('roleOv').classList.add('hide');
+    gameLoop();
+  };
+};
+
+el('btnExitGame').onclick = () => {
+  if (confirm('Thoát ván đấu?')) {
+    G.over = true;
+    if (APP.conn) APP.conn.close();
+    if (APP.peer) APP.peer.destroy();
+    APP.peer = null; APP.conn = null; APP.peerConns = {};
+    showScreen('s-menu');
+  }
+};
+
+function buildPlayers(humans, bots) {
+  let id = 0;
+  const ps = [];
+  humans.forEach(h => ps.push({
+    id: id++, uuid: h.uuid, name: h.name, avatar: h.avatar, isHost: !!h.isHost, isBot: false, alive: true, role: null,
+    traits: { intel: 5, bold: 5, lie: 5, gullible: 5, temper: 5, persuade: 5, fear: 5, memory: 5 },
+    sus: {}, trust: {}, memory: [], canVote: true, defendedToday: false
+  }));
+  bots.forEach(b => ps.push({
+    id: id++, uuid: null, name: b.name, avatar: b.avatar, isHost: false, isBot: true, alive: true, role: null,
+    traits: { intel: rnd(3,9), bold: rnd(2,10), lie: rnd(2,10), gullible: rnd(2,10), temper: rnd(2,10), persuade: rnd(2,10), fear: rnd(2,10), memory: rnd(3,10) },
+    sus: {}, trust: {}, memory: [], canVote: true, defendedToday: false
+  }));
+  return ps;
 }
 
-/* =========================================================
-   NETWORK (PeerJS)
-========================================================= */
+function makeBots(n) {
+  const names = shuffle([...BOT_NAMES]);
+  const avs = shuffle([...AVATARS]);
+  return Array.from({ length: n }, (_, i) => ({ name: names[i % names.length], avatar: avs[i % avs.length] }));
+}
+
+function assignRoles(ps) {
+  const roles = shuffle([...(COMP[ps.length] || COMP[8])]);
+  ps.forEach((p, i) => p.role = roles[i]);
+  
+  ps.forEach(p => {
+    ps.forEach(o => {
+      if (o.id === p.id) return;
+      p.sus[o.id] = rnd(5, 28);
+      p.trust[o.id] = rnd(15, 45);
+    });
+  });
+  
+  const wolves = ps.filter(isWolf);
+  wolves.forEach(w => wolves.forEach(o => {
+    if (o.id !== w.id) { w.trust[o.id] = 95; w.sus[o.id] = 0; }
+  }));
+}
+
+function setPhase(p) {
+  G.phase = p;
+  document.body.className = p;
+  el('pill').textContent = p === 'night' ? `🌙 ĐÊM ${G.day}` : `☀️ NGÀY ${G.day}`;
+}
+
+/* =========================================
+   RENDER PLAYERS
+========================================= */
+function renderPlayers() {
+  const list = el('pList');
+  list.innerHTML = '';
+  G.players.forEach(p => {
+    const isMe = APP.myId === p.id;
+    const d = document.createElement('div');
+    d.className = `p-card ${p.alive ? '' : 'dead'} ${isMe ? 'me' : ''}`;
+    d.innerHTML = `
+      <div class="p-av">${p.avatar}</div>
+      <div style="flex:1;">
+        <div class="p-name">${p.name} ${isMe ? '★' : ''}</div>
+        <div class="p-status">${p.alive ? 'Còn sống' : 'Đã chết'}</div>
+      </div>
+    `;
+    if (!p.isBot && !isMe && p.uuid && (APP.role === 'host' || APP.role === 'client')) {
+      const btn = document.createElement('button');
+      btn.innerHTML = '👋';
+      btn.style = 'background:transparent; border:none; font-size:16px; cursor:pointer;';
+      btn.onclick = () => sendFriendReq(p.uuid, p.name);
+      d.appendChild(btn);
+    }
+    list.appendChild(d);
+  });
+}
+
+function broadcastState() {
+  renderPlayers();
+  if (APP.role === 'host') {
+    const pub = G.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, alive: p.alive, isHost: p.isHost }));
+    Object.values(APP.peerConns).forEach(c => {
+      if (c.open) c.send({ t: 'state', players: pub, day: G.day, phase: G.phase });
+    });
+  }
+}
+
+/* =========================================
+   CHOICES & TARGETS
+========================================= */
+function showChoices(options) {
+  return new Promise(resolve => {
+    const box = el('actionArea');
+    box.innerHTML = '';
+    options.forEach((opt, i) => {
+      const b = document.createElement('button');
+      b.className = 'choice-btn';
+      b.innerHTML = `<div class="choice-key">${String.fromCharCode(65+i)}</div><div class="choice-text"><b>${opt.label}</b><span>${opt.desc || ''}</span></div>`;
+      b.onclick = () => { beep(560, 0.06); box.innerHTML = ''; resolve(i); };
+      box.appendChild(b);
+    });
+  });
+}
+
+function showTargets(prompt, candidates) {
+  return new Promise(resolve => {
+    // Lọc bỏ người đã chết
+    const aliveCands = candidates.filter(c => {
+      const actual = G.players.find(p => p.id === c.id);
+      return actual && actual.alive;
+    });
+    
+    if (!aliveCands.length) { resolve(null); return; }
+    if (prompt) addLog(prompt, 'sys');
+    
+    const box = el('actionArea');
+    box.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'target-grid';
+    
+    aliveCands.forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'target-btn';
+      b.innerHTML = `<div class="t-av">${t.avatar || '❓'}</div><div class="t-name">${t.name}</div>`;
+      b.onclick = () => { beep(440, 0.07); box.innerHTML = ''; resolve(t.id); };
+      grid.appendChild(b);
+    });
+    box.appendChild(grid);
+  });
+}
+
+function showWaiting(text = 'Đang chờ...') {
+  el('actionArea').innerHTML = `<div style="text-align:center; color:var(--muted); padding:20px; font-style:italic;">${text}</div>`;
+}
+
+/* =========================================
+   ASK & PROMPTS (Network)
+========================================= */
+let promptSeq = 0;
+const pendingPrompts = {};
+
+async function ask(pid, kind, payload) {
+  const p = G.players.find(x => x.id === pid);
+  if (!p || (!p.alive && p.role !== 'hunter')) return null;
+  
+  const isLocal = APP.role === 'solo' || (APP.role === 'host' && p.isHost);
+  
+  if (isLocal) {
+    if (kind === 'choice') {
+      if (payload.logMsg) addLog(payload.logMsg, 'sys');
+      return await showChoices(payload.options);
+    } else if (kind === 'target') {
+      return await showTargets(payload.prompt, payload.candidates);
+    } else if (kind === 'text') {
+      return await showDefenseModal();
+    }
+  }
+  
+  return new Promise(resolve => {
+    const id = 'p' + (++promptSeq);
+    pendingPrompts[id] = resolve;
+    const conn = APP.peerConns[p.uuid];
+    if (conn && conn.open) conn.send({ t: 'prompt', id, kind, payload });
+    setTimeout(() => {
+      if (pendingPrompts[id]) { delete pendingPrompts[id]; resolve(null); }
+    }, 30000);
+  });
+}
+
+/* =========================================
+   ROLE REVEAL
+========================================= */
+function showRoleReveal(roleKey) {
+  const r = ROLES[roleKey];
+  el('roleIcon').textContent = r.icon;
+  el('roleIcon').style.color = r.color;
+  el('roleName').textContent = r.name;
+  el('roleName').style.color = r.color;
+  el('roleTeam').textContent = r.teamName;
+  el('roleDesc').textContent = r.desc;
+  el('roleOv').classList.remove('hide');
+  beep(320, 0.5);
+}
+el('btnRoleOk').onclick = () => { if (APP.onRoleOk) APP.onRoleOk(); };
+
+/* =========================================
+   DEFENSE MODAL
+========================================= */
+function showDefenseModal() {
+  return new Promise(resolve => {
+    el('defText').value = '';
+    el('defOv').classList.remove('hide');
+    el('defText').focus();
+    
+    const finish = val => {
+      el('defOv').classList.add('hide');
+      el('btnDefSend').onclick = null;
+      el('btnDefPass').onclick = null;
+      resolve(val);
+    };
+    el('btnDefSend').onclick = () => {
+      const v = el('defText').value.trim();
+      if (v) { beep(600, 0.1); finish(v); }
+    };
+    el('btnDefPass').onclick = () => { beep(300, 0.1); finish(null); };
+  });
+}
+
+/* =========================================
+   MAIN LOOP
+========================================= */
+async function gameLoop() {
+  while (!G.over) {
+    await nightPhase();
+    if (G.over) break;
+    if (checkWin()) break;
+    
+    await dayPhase();
+    if (G.over) break;
+    if (checkWin()) break;
+    
+    G.day++;
+  }
+}
+
+/* =========================================
+   NIGHT PHASE
+========================================= */
+async function nightPhase() {
+  setPhase('night');
+  G.nightKill = null; G.nightHeal = null; G.nightPoison = null; G.guardTarget = null;
+  bLog('---', 'sys');
+  bLog(`🌙 <b>Đêm ${G.day}</b> — Cả làng chìm vào giấc ngủ...`, 'night');
+  beep(180, 0.6);
+  await wait(1500);
+  
+  const alive = () => G.players.filter(p => p.alive);
+  
+  // WOLVES
+  const wolves = alive().filter(isWolf);
+  if (wolves.length) {
+    // Sói không cắn lại người đêm trước
+    let targets = alive().filter(p => !isWolf(p) && p.id !== G.lastNightKill);
+    if (targets.length === 0) targets = alive().filter(p => !isWolf(p));
+    
+    if (targets.length) {
+      const votes = {};
+      for (const w of wolves) {
+        let t = null;
+        if (w.isBot) {
+          t = pick(targets).id;
+        } else {
+          t = await ask(w.id, 'target', { prompt: '🐺 <b>Bầy Sói thức dậy.</b> Chọn mục tiêu đêm nay:', candidates: targets });
+        }
+        if (t !== null) votes[t] = (votes[t] || 0) + 1;
+      }
+      let best = null, bv = 0;
+      Object.entries(votes).forEach(([id, v]) => { if (v > bv) { bv = v; best = parseInt(id); } });
+      G.nightKill = best;
+    }
+  }
+  
+  // SEER
+  const seer = alive().find(p => p.role === 'seer');
+  if (seer) {
+    const cands = alive().filter(p => p.id !== seer.id);
+    if (cands.length) {
+      if (seer.isBot) {
+        const t = pick(cands);
+        const v = seerView(t);
+        seer.memory.push({ type: 'seer', target: t.id, result: v });
+        if (v === 'wolf') { seer.sus[t.id] = 100; seer.trust[t.id] = 0; }
+        else { seer.sus[t.id] = clamp(seer.sus[t.id], 0, 10); seer.trust[t.id] = 80; }
+      } else {
+        const t = await ask(seer.id, 'target', { prompt: '🔮 <b>Ngươi là Tiên Tri.</b> Soi ai đêm nay?', candidates: cands });
+        if (t !== null) {
+          const target = G.players.find(p => p.id === t);
+          const v = seerView(target);
+          seer.memory.push({ type: 'seer', target: t, result: v });
+          const msg = `🔮 Bạn soi <b>${target.name}</b>: <b style="color:${v==='wolf'?'#d94b4b':'#5fbf7f'}">${v==='wolf'?'MA SÓI':'DÂN LÀNG'}</b>`;
+          if (seer.isHost) addLog(msg, 'good');
+          else APP.peerConns[seer.uuid]?.send({ t: 'log', html: msg, type: 'good' });
+        }
+      }
+    }
+  }
+  
+  // GUARD
+  const guard = alive().find(p => p.role === 'guard');
+  if (guard) {
+    const cands = alive().filter(p => p.id !== G.guardLast);
+    if (cands.length) {
+      if (guard.isBot) {
+        cands.sort((a,b) => (guard.trust[b.id] || 0) - (guard.trust[a.id] || 0));
+        G.guardTarget = cands[0].id;
+      } else {
+        G.guardTarget = await ask(guard.id, 'target', { prompt: '🛡️ <b>Ngươi là Bảo Vệ.</b> Bảo vệ ai đêm nay?', candidates: cands });
+      }
+    }
+    G.guardLast = G.guardTarget;
+  }
+  
+  // WITCH
+  const witch = alive().find(p => p.role === 'witch');
+  if (witch) {
+    if (witch.isBot) {
+      if (!G.witchHealUsed && G.nightKill) {
+        const v = G.players.find(p => p.id === G.nightKill);
+        if (v && (witch.trust[v.id] || 0) > 60 && Math.random() < 0.5) { G.witchHealUsed = true; G.nightHeal = G.nightKill; }
+      }
+      if (!G.witchPoisonUsed && !G.nightPoison && Math.random() < 0.3) {
+        const cands = alive().filter(p => p.id !== witch.id && (witch.sus[p.id] || 0) > 68);
+        if (cands.length) { G.witchPoisonUsed = true; G.nightPoison = cands.sort((a,b) => (witch.sus[b.id]||0) - (witch.sus[a.id]||0))[0].id; }
+      }
+    } else {
+      const opts = [];
+      if (!G.witchHealUsed && G.nightKill) opts.push({ key: 'heal', label: '🧪 Dùng bình CỨU', desc: 'Cứu người bị Sói cắn (không biết là ai).' });
+      if (!G.witchPoisonUsed) opts.push({ key: 'poison', label: '☠️ Dùng bình ĐỘC', desc: 'Giết một người (1 lần/ván).' });
+      opts.push({ key: 'none', label: 'Không làm gì', desc: 'Giữ lại thuốc.' });
+      
+      if (opts.length > 1) {
+        const c = await ask(witch.id, 'choice', { logMsg: '🧪 <b>Ngươi là Phù Thủy.</b>', options: opts });
+        if (c !== null) {
+          const chosen = opts[c];
+          if (chosen.key === 'heal') { G.witchHealUsed = true; G.nightHeal = G.nightKill; }
+          else if (chosen.key === 'poison') {
+            G.witchPoisonUsed = true;
+            const cands = alive().filter(p => p.id !== witch.id);
+            const t = await ask(witch.id, 'target', { prompt: '☠️ Ngươi rót độc vào ai?', candidates: cands });
+            if (t !== null) G.nightPoison = t;
+          }
+        }
+      }
+    }
+  }
+  
+  // WHITE WOLF
+  const ww = alive().find(p => p.role === 'whitewolf');
+  if (ww && !G.whiteWolfUsed) {
+    const others = alive().filter(isWolf).filter(p => p.id !== ww.id);
+    if (others.length) {
+      let use = false;
+      if (ww.isBot) use = Math.random() < 0.1;
+      else {
+        const c = await ask(ww.id, 'choice', { options: [
+          { label: 'Dùng nanh vuốt bạc', desc: 'Giết 1 con Sói khác (1 lần/ván).' },
+          { label: 'Giữ lại', desc: 'Chưa phải lúc.' }
+        ]});
+        use = c === 0;
+      }
+      if (use) {
+        G.whiteWolfUsed = true;
+        let t = null;
+        if (ww.isBot) t = pick(others).id;
+        else t = await ask(ww.id, 'target', { prompt: '🌕 Chọn con Sói để phản bội:', candidates: others });
+        if (t !== null) G.nightPoison = t;
+      }
+    }
+  }
+  
+  // CUPID
+  if (G.day === 1) {
+    const cupid = alive().find(p => p.role === 'cupid');
+    if (cupid) {
+      const cands = alive().filter(p => p.id !== cupid.id);
+      if (cands.length >= 2) {
+        if (cupid.isBot) { const s = shuffle(cands); G.lovers = [s[0].id, s[1].id]; }
+        else {
+          const a = await ask(cupid.id, 'target', { prompt: '💘 <b>Cupid.</b> Chọn người tình 1:', candidates: cands });
+          if (a !== null) {
+            const b = await ask(cupid.id, 'target', { prompt: '💘 Chọn người tình 2:', candidates: cands.filter(p => p.id !== a) });
+            if (b !== null) G.lovers = [a, b];
+          }
+        }
+      }
+    }
+  }
+  
+  await wait(1000);
+  await resolveNight();
+}
+
+function npcWolfChoice(w, targets) {
+  let best = null, score = -999;
+  targets.forEach(t => {
+    let s = rnd(0, 10);
+    G.players.forEach(p => { if (p.alive && !isWolf(p)) s += (p.trust[t.id] || 0) * 0.3; });
+    if (t.role === 'seer' || t.role === 'guard') s += 15;
+    if (s > score) { score = s; best = t; }
+  });
+  return best ? best.id : null;
+}
+
+async function resolveNight() {
+  const deaths = new Set();
+  if (G.nightKill) {
+    const saved = (G.guardTarget === G.nightKill) || (G.nightHeal === G.nightKill);
+    if (!saved) deaths.add(G.nightKill);
+    else bLog('🛡️ Có ai đó đã sống sót qua đêm...', 'good');
+  }
+  if (G.nightPoison && G.nightPoison !== G.nightKill) deaths.add(G.nightPoison);
+  
+  G.lastNightKill = G.nightKill; // Lưu lại để đêm sau Sói không cắn trùng
+  
+  for (const id of [...deaths]) {
+    if (G.lovers.includes(id)) {
+      const other = G.lovers.find(x => x !== id);
+      if (other && !deaths.has(other)) deaths.add(other);
+    }
+  }
+  
+  if (deaths.size === 0) {
+    bLog('🌅 Bình minh lên. Không ai chết đêm qua.', 'day');
+  } else {
+    for (const id of deaths) {
+      const p = G.players.find(x => x.id === id);
+      if (p && p.alive) { p.alive = false; beep(140, 0.5); await wait(800); }
+    }
+    broadcastState();
+  }
+  await wait(1500);
+}
+
+/* =========================================
+   DAY PHASE
+========================================= */
+async function dayPhase() {
+  setPhase('day');
+  bLog('---', 'sys');
+  bLog(`☀️ <b>Ngày ${G.day}</b> — Cả làng tập trung tại quảng trường.`, 'day');
+  beep(520, 0.3);
+  await wait(1500);
+  
+  G.players.forEach(p => p.defendedToday = false);
+  
+  const dead = G.players.filter(p => !p.alive);
+  if (dead.length) {
+    const last = dead[dead.length-1];
+    bLog(`⚰️ Người ta tìm thấy <b>${last.name}</b>. Vai trò thật: <b>${ROLES[last.role].name}</b>.`, 'death');
+  }
+  
+  await defenseRound();
+  await wait(500);
+  
+  const eliminated = await votePhase();
+  if (eliminated !== null) await executePlayer(eliminated);
+}
+
+async function defenseRound() {
+  bLog('🗣️ <b>Lượt biện minh.</b> Mỗi người có một lần lên tiếng.', 'day');
+  await wait(1000);
+  const order = shuffle(G.players.filter(p => p.alive));
+  
+  for (const actor of order) {
+    if (!actor.alive) continue;
+    
+    if (actor.isBot) {
+      botDefend(actor);
+      await wait(1500);
+    } else {
+      const text = await ask(actor.id, 'text', {});
+      if (text) {
+        bLog(`<b>${actor.name}</b>: "${esc(text)}"`, 'player');
+        applyDefenseEffect(actor, text);
+      } else {
+        bLog(`<b>${actor.name}</b>: "..."`, 'player');
+      }
+      await wait(1000);
+    }
+  }
+}
+
+function botDefend(actor) {
+  const lines = [
+    'Tôi là dân làng. Hãy tin tôi.',
+    'Nếu tôi là Sói, tôi đã chẳng nói nhiều thế này.',
+    'Hãy nhìn vào hành động thay vì lời nói.',
+    'Tôi chỉ đang quan sát. Im lặng không phải là tội.',
+    'Đêm qua tôi ở nhà, không ai thấy tôi ra ngoài cả.'
+  ];
+  const text = pick(lines);
+  bLog(`<b>${actor.name}</b>: "${text}"`, 'npc');
+  applyDefenseEffect(actor, text);
+}
+
+function applyDefenseEffect(actor, text) {
+  const t = text.toLowerCase();
+  let defend = 0, attack = 0;
+  if (/vô tội|tin tôi|dân làng|không có gì để giấu/.test(t)) defend += 2;
+  if (/sói|phản bội|đáng ngờ|nghi ngờ/.test(t)) attack += 2;
+  
+  G.players.filter(p => p.alive && p.id !== actor.id).forEach(p => {
+    if (defend > 0) p.sus[actor.id] = clamp((p.sus[actor.id] || 0) - defend * rnd(2,5), 0, 100);
+    if (attack > 0) {
+      const others = G.players.filter(o => o.alive && o.id !== p.id && o.id !== actor.id);
+      if (others.length) {
+        const target = others.sort((a,b) => (p.sus[b.id]||0) - (p.sus[a.id]||0))[0];
+        p.sus[target.id] = clamp((p.sus[target.id] || 0) + attack * rnd(2,5), 0, 100);
+      }
+    }
+  });
+}
+
+async function votePhase() {
+  bLog('🗳️ <b>Bỏ phiếu treo cổ.</b>', 'vote');
+  await wait(1000);
+  
+  let pool = G.players.filter(p => p.alive).map(p => p.id);
+  let round = 0;
+  
+  while (round < 5) {
+    round++;
+    const voters = G.players.filter(p => p.alive && p.canVote);
+    const votes = {};
+    pool.forEach(id => votes[id] = []);
+    
+    for (const voter of voters) {
+      const cands = pool
+        .filter(id => id !== voter.id)
+        .map(id => G.players.find(p => p.id === id))
+        .filter(p => p && p.alive);
+        
+      if (!cands.length) continue;
+      
+      let choice = null;
+      if (voter.isBot) {
+        choice = npcVoteChoice(voter, cands);
+      } else {
+        choice = await ask(voter.id, 'target', { prompt: `🗳️ Vòng ${round}: Bỏ phiếu cho ai?`, candidates: cands });
+      }
+      if (choice !== null) votes[choice].push(voter.id);
+    }
+    
+    voters.forEach(v => {
+      const targetId = Object.keys(votes).find(k => votes[k].includes(v.id));
+      if (targetId) {
+        const t = G.players.find(p => p.id == targetId);
+        if (t) bLog(`<b>${v.name}</b> phiếu cho <b>${t.name}</b>`, 'eff');
+      }
+    });
+    await wait(1000);
+    
+    let maxV = 0, winners = [];
+    Object.entries(votes).forEach(([id, arr]) => {
+      if (arr.length > maxV) { maxV = arr.length; winners = [parseInt(id)]; }
+      else if (arr.length === maxV && arr.length > 0) winners.push(parseInt(id));
+    });
+    
+    if (maxV === 0) { bLog('⚖️ Không ai bị treo cổ.', 'day'); return null; }
+    if (winners.length === 1) {
+      const w = G.players.find(p => p.id === winners[0]);
+      bLog(`⚖️ <b>${w.name}</b> bị treo cổ (${maxV} phiếu).`, 'vote');
+      await wait(1000);
+      return winners[0];
+    }
+    
+    bLog(`⚖️ Hòa phiếu! Bỏ phiếu lại vòng ${round+1}.`, 'vote');
+    pool = winners;
+    await wait(1000);
+  }
+  return null;
+}
+
+function npcVoteChoice(npc, cands) {
+  let best = null, score = -999;
+  cands.forEach(c => {
+    let s = (npc.sus[c.id] || 0) - (npc.trust[c.id] || 0) * 0.3 + rnd(-5, 5);
+    if (s > score) { score = s; best = c; }
+  });
+  return best ? best.id : null;
+}
+
+async function executePlayer(id) {
+  const p = G.players.find(x => x.id === id);
+  if (!p || !p.alive) return;
+  
+  if (p.role === 'fool') {
+    bLog(`🤡 <b>${p.name}</b> lật bài: <b>KẺ NGỐC</b>!`, 'death');
+    await wait(1500);
+    endGame('fool');
+    return;
+  }
+  
+  p.alive = false;
+  bLog(`⚰️ <b>${p.name}</b> bị treo cổ. Vai trò: <b>${ROLES[p.role].name}</b>.`, 'death');
+  broadcastState();
+  await wait(1500);
+  
+  if (p.role === 'hunter') {
+    const cands = G.players.filter(x => x.alive && x.id !== p.id);
+    if (cands.length) {
+      let t = null;
+      if (p.isBot) t = npcVoteChoice(p, cands);
+      else t = await ask(p.id, 'target', { prompt: '🏹 <b>Thợ Săn!</b> Bắn hạ một người trước khi chết:', candidates: cands });
+      
+      if (t !== null) {
+        const v = G.players.find(x => x.id === t);
+        if (v && v.alive) {
+          v.alive = false;
+          bLog(`🏹 ${p.name} kéo theo <b>${v.name}</b> (${ROLES[v.role].name}).`, 'death');
+        }
+      }
+    }
+    broadcastState();
+    await wait(1000);
+  }
+  
+  if (G.lovers.includes(p.id)) {
+    const other = G.lovers.find(x => x !== p.id);
+    const o = G.players.find(x => x.id === other);
+    if (o && o.alive) {
+      o.alive = false;
+      bLog(`💔 <b>${o.name}</b> chết theo người tình.`, 'death');
+      broadcastState();
+      await wait(1000);
+    }
+  }
+  broadcastState();
+}
+
+/* =========================================
+   WIN / END GAME
+========================================= */
+function checkWin() {
+  const alive = G.players.filter(p => p.alive);
+  const wolves = alive.filter(isWolf);
+  const others = alive.filter(p => !isWolf(p));
+  
+  if (wolves.length === 0) { endGame('village'); return true; }
+  if (wolves.length >= others.length) { endGame('wolf'); return true; }
+  return false;
+}
+
+function endGame(winner) {
+  if (G.over) return;
+  G.over = true;
+  
+  const roles = G.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, role: p.role, alive: p.alive, isBot: p.isBot, uuid: p.uuid }));
+  
+  if (APP.role === 'host') {
+    APP.peerConns && Object.values(APP.peerConns).forEach(c => {
+      if (c.open) c.send({ t: 'end', winner, roles });
+    });
+  }
+  renderEnd(winner, roles, APP.myRole, APP.myId);
+}
+
+function renderEnd(winner, roles, myRole, myId) {
+  const me = roles.find(r => r.id === myId);
+  const myRoleKey = myRole || (me ? me.role : null);
+  const myAlive = me ? me.alive : false;
+  
+  const isWolfRole = myRoleKey === 'wolf' || myRoleKey === 'whitewolf';
+  const won = (winner === 'village' && myRoleKey && !isWolfRole) || (winner === 'wolf' && isWolfRole) || (winner === 'fool' && myRoleKey === 'fool');
+  
+  const titles = {
+    village: { t: '🌅 DÂN LÀNG THẮNG', c: '#5fbf7f', s: 'Bầy Sói đã bị xóa sổ. Ngôi làng bình yên trở lại.' },
+    wolf: { t: '🐺 SÓI THẮNG', c: '#d94b4b', s: 'Ngôi làng chìm trong bóng tối. Những tiếng tru vang vọng.' },
+    fool: { t: '🤡 KẺ NGỐC THẮNG', c: '#f39c12', s: 'Kẻ bị khinh thường lại cười sau cùng.' }
+  };
+  const info = titles[winner] || titles.village;
+  
+  el('endTitle').textContent = info.t;
+  el('endTitle').style.color = info.c;
+  el('endSub').innerHTML = `${info.s}<br><br>` +
+    (won ? '<b style="color:#5fbf7f; font-size:18px;">BẠN ĐÃ THẮNG</b>' : '<b style="color:#d94b4b; font-size:18px;">BẠN ĐÃ THUA</b>') +
+    `<br><span style="font-size:12px;">Vai trò: ${myRoleKey ? ROLES[myRoleKey].name : '?'} · ${myAlive ? 'Sống sót' : 'Đã chết'}</span>`;
+    
+  const grid = el('revGrid');
+  grid.innerHTML = '';
+  roles.forEach(p => {
+    const r = ROLES[p.role];
+    const isW = p.role === 'wolf' || p.role === 'whitewolf';
+    const isMe = p.id === myId;
+    const d = document.createElement('div');
+    d.style = `background:var(--panel); padding:10px; border-radius:8px; border:1px solid ${isW ? '#5c2020' : 'var(--line)'}; ${p.alive ? '' : 'opacity:0.5;'}`;
+    d.innerHTML = `<div style="font-size:12px; font-weight:bold; margin-bottom:4px;">${p.avatar} ${p.name}${isMe?' ★':''}</div>
+      <div style="font-size:11px; color:${r.color};">${r.icon} ${r.name}</div>
+      <div style="font-size:10px; color:var(--muted); margin-top:4px;">${p.alive ? 'Sống' : 'Chết'}</div>`;
+      
+    if (!isMe && !p.isBot && p.uuid) {
+      const btn = document.createElement('button');
+      btn.textContent = 'Kết bạn';
+      btn.style = 'width:100%; margin-top:6px; padding:4px; font-size:10px; background:transparent; border:1px solid var(--gold-dim); color:var(--gold); border-radius:4px; cursor:pointer;';
+      btn.onclick = () => sendFriendReq(p.uuid, p.name);
+      d.appendChild(btn);
+    }
+    grid.appendChild(d);
+  });
+  
+  showScreen('s-end');
+  beep(winner === 'wolf' ? 180 : 660, 0.6);
+}
+
+el('btnAgain').onclick = () => {
+  G.over = true;
+  if (APP.conn) APP.conn.close();
+  if (APP.peer) APP.peer.destroy();
+  APP.peer = null; APP.conn = null; APP.peerConns = {};
+  showScreen('s-menu');
+};
+
+/* =========================================
+   ONLINE / PEERJS
+========================================= */
 const PEER_CONFIG = {
   debug: 1,
   config: {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-    ],
-    iceCandidatePoolSize: 10
+      { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
+    ]
   }
 };
 
-function broadcast(msg){
-  Object.values(APP.peerConns).forEach(c=>{
-    if(c && c.open) c.send(msg);
-  });
-}
-function sendTo(uuid,msg){
-  const c = APP.peerConns[uuid];
-  if(c && c.open) c.send(msg);
+function genCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => c[rnd(0,c.length-1)]).join('');
 }
 
-/* =========================================================
-   LOG
-========================================================= */
-function log(html,cls=''){
-  const d=document.createElement('div');
-  d.className='ll '+(cls||'');
-  d.innerHTML=html;
-  const L=el('log');
-  L.appendChild(d);
-  L.scrollTop=L.scrollHeight;
-}
-function bLog(html,cls=''){
-  log(html,cls);
-  if(APP.role==='host'){
-    broadcast({t:'log',html,cls});
-  }
-}
-
-/* =========================================================
-   PLAYERS RENDER
-========================================================= */
-function renderPlayers(){
-  const list=el('pList'); if(!list) return;
-  list.innerHTML='';
-  G.players.forEach(p=>{
-    const d=document.createElement('div');
-    const isMe=APP.myId!=null&&p.id===APP.myId;
-    d.className='pcard'+(p.alive?'':' dead')+(isMe?' me':'');
-    d.innerHTML=`<div class="pav">${p.avatar}</div>
-      <div style="flex:1"><div class="pname">${p.name}${isMe?' ★':''}</div>
-      <div class="pstat">${p.alive?'còn sống':'đã chết'}</div></div>`;
-    
-    // Nút Kết Bạn
-    if(!p.isBot && !isMe && p.uuid && (APP.role==='host'||APP.role==='client')) {
-       const btn = document.createElement('button');
-       btn.textContent = '👋';
-       btn.title = 'Kết bạn';
-       btn.style = 'background:transparent;border:none;color:var(--gold);cursor:pointer;font-size:16px';
-       btn.onclick = () => sendFriendRequest(p.uuid, p.name);
-       d.appendChild(btn);
-    }
-    list.appendChild(d);
-  });
-}
-function bPlayers(){
-  renderPlayers();
-  if(APP.role==='host'){
-    broadcast({t:'state',players:publicPlayers(),day:G.day,phase:G.phase});
-  }
-}
-function publicPlayers(){
-  return G.players.map(p=>({id:p.id,name:p.name,avatar:p.avatar,alive:p.alive,isHost:!!p.isHost}));
-}
-
-/* =========================================================
-   PHASE PILL
-========================================================= */
-function setPhase(p){
-  G.phase=p;
-  document.body.className=p;
-  const pill=el('pill');
-  if(pill) pill.textContent = p==='night'?`🌙 ĐÊM ${G.day}`:`☀️ NGÀY ${G.day}`;
-}
-
-/* =========================================================
-   CHOICES
-========================================================= */
-function showChoices(options){
-  return new Promise(resolve=>{
-    const box=el('actions');
-    box.innerHTML='';
-    options.forEach((opt,i)=>{
-      const b=document.createElement('button');
-      b.className='choice';
-      b.innerHTML=`<span class="ckey">${String.fromCharCode(65+i)}</span>
-        <div><div class="clabel">${opt.label}</div>
-        <div class="cdesc">${opt.desc||''}</div></div>`;
-      b.onclick=()=>{beep(560,.06,'triangle',.03);box.innerHTML='';resolve(i);};
-      box.appendChild(b);
-    });
-  });
-}
-function showTargets(prompt,candidates){
-  return new Promise(resolve=>{
-    if(!candidates||!candidates.length){resolve(null);return;}
-    if(prompt) log(prompt,'night');
-    const box=el('actions');
-    box.innerHTML='';
-    const g=document.createElement('div');
-    g.className='tgrid';
-    candidates.forEach(t=>{
-      const b=document.createElement('button');
-      b.className='tbtn';
-      b.innerHTML=`<div class="tav">${t.avatar||'❓'}</div><div>${t.name}</div>`;
-      b.onclick=()=>{beep(440,.07,'square',.03);box.innerHTML='';resolve(t.id);};
-      g.appendChild(b);
-    });
-    box.appendChild(g);
-  });
-}
-function showWaiting(text){
-  const box=el('actions'); if(!box) return;
-  box.innerHTML=`<div class="waiting">${text||'Đang chờ'}</div>`;
-}
-
-/* =========================================================
-   ASK PLAYER (STRICT CHECK FOR ALIVE)
-========================================================= */
-let promptSeq=0;
-const pendingPrompts={};
-
-async function ask(pid,kind,payload){
-  const p=G.players.find(x=>x.id===pid);
-  if(!p) return null;
-  // Người chết không được hành động (ngoại trừ Thợ Săn lúc chết)
-  if(!p.alive && p.role !== 'hunter') return null; 
+el('btnCreate').onclick = () => {
+  APP.role = 'host';
+  APP.roomCode = genCode();
+  APP.myId = 0;
+  APP.maxPlayers = 8;
+  APP.lobbyPlayers = [{ id: 0, uuid: APP.uuid, name: APP.user.name, avatar: APP.user.avatar, isHost: true }];
+  APP.peerConns = {};
   
-  const isLocal = (APP.role==='solo') || (APP.role==='host' && p.isHost);
-  if(isLocal){
-    if(kind==='choice'){
-      if(payload.logMsg) log(payload.logMsg,'night');
-      return await showChoices(payload.options);
-    } else {
-      return await showTargets(payload.prompt,payload.candidates);
-    }
-  }
-  return new Promise(resolve=>{
-    const id='p'+(++promptSeq);
-    pendingPrompts[id]=resolve;
-    sendTo(p.uuid,{t:'prompt',id,kind,payload});
-    setTimeout(()=>{
-      if(pendingPrompts[id]){ delete pendingPrompts[id]; resolve(null); }
-    },30000);
-  });
-}
-
-/* =========================================================
-   INIT LOGIN
-========================================================= */
-(function(){
-  const row=el('avRow');
-  AVATARS.slice(0,8).forEach((a,i)=>{
-    const b=document.createElement('button');
-    b.className='avOpt'+(i===0?' on':'');
-    b.textContent=a;
-    b.onclick=()=>{row.querySelectorAll('.avOpt').forEach(x=>x.classList.remove('on'));
-      b.classList.add('on'); APP._av=a;};
-    row.appendChild(b);
-  });
-  APP._av=AVATARS[0];
-  const saved=localStorage.getItem('masoi_user');
-  if(saved){
-    try{
-      const u=JSON.parse(saved);
-      el('inName').value=u.name||'';
-      if(u.avatar){
-        APP._av=u.avatar;
-        row.querySelectorAll('.avOpt').forEach(x=>x.classList.toggle('on',x.textContent===u.avatar));
-      }
-    }catch(e){}
-  }
-  el('btnLogin').onclick=()=>{
-    const n=(el('inName').value||'').trim()||('Người '+rnd(100,999));
-    APP.user={name:n.slice(0,16),avatar:APP._av};
-    localStorage.setItem('masoi_user',JSON.stringify(APP.user));
-    el('mName').textContent=APP.user.name;
-    el('mAv').textContent=APP.user.avatar;
-    showScreen('menu');
-    beep(600,.1,'sine',.04);
-  };
-  el('inName').addEventListener('keydown',e=>{if(e.key==='Enter') el('btnLogin').click();});
-})();
-
-el('btnLogout').onclick=()=>{APP.user=null;localStorage.removeItem('masoi_user');showScreen('login');};
-document.querySelectorAll('[data-back="menu"]').forEach(b=>{b.onclick=()=>showScreen('menu');});
-
-/* =========================================================
-   MENU ACTIONS
-========================================================= */
-el('btnFriends').onclick=()=>{
-  renderFriends();
-  showScreen('friends');
-};
-el('btnAddFriend').onclick=()=>{
-  const name = el('inFriendName').value.trim();
-  if(name){ addFriend(name, '🧑', null); el('inFriendName').value=''; renderFriends(); alert('Đã thêm bạn (offline)'); }
-};
-
-/* =========================================================
-   BOT SETUP
-========================================================= */
-(function(){
-  const row=el('botCountRow');
-  for(let n=8;n<=12;n++){
-    const b=document.createElement('button');
-    b.className='cbtn'+(n===8?' on':'');
-    b.textContent=n+' người';
-    b.onclick=()=>{row.querySelectorAll('.cbtn').forEach(x=>x.classList.remove('on'));
-      b.classList.add('on'); G.playerCount=n; beep(600,.05,'sine',.02);};
-    row.appendChild(b);
-  }
-})();
-
-el('btnBot').onclick=()=>{APP.role=null; showScreen('bot');};
-el('btnOnline').onclick=()=>showScreen('online');
-
-el('btnStartBot').onclick=async()=>{
-  APP.role='solo';
-  APP.myId=0;
-  const humans=[{id:0,uuid:'local',name:APP.user.name,avatar:APP.user.avatar,isHost:true}];
-  const bots=makeBots(G.playerCount-1);
-  G.players=buildPlayers(humans,bots);
-  assignRoles(G.players);
-
-  showScreen('dealing');
-  playDealingAnimation();
-  await wait(1800);
-
-  showScreen('game');
-  clearLog();
-  renderPlayers();
-  setPhase('night');
-  el('roleMini').innerHTML=`Vai trò: <b>${ROLES[G.players[0].role].name}</b>`;
-  showRoleReveal(G.players[0].role);
-  APP.onRoleOk=()=>{
-    el('roleOv').classList.add('hide');
-    setTimeout(()=>gameLoop(),200);
-  };
-};
-
-/* =========================================================
-   EXIT GAME
-========================================================= */
-el('btnExitGame').onclick=()=>{
-  if(confirm('Bạn có chắc muốn thoát ván đấu? (Nếu là chủ phòng, phòng sẽ đóng)')){
-    if(APP.conn) APP.conn.close();
-    if(APP.peer) APP.peer.destroy();
-    APP.peer=null;APP.conn=null;APP.peerConns={};
-    APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];APP.myId=null;APP.myRole=null;
-    APP.onRoleOk=null;APP.readyCount=0;APP.peerReady=false;
-    G.over=true; // Dừng vòng lặp game
-    el('actions').innerHTML='';
-    clearLog();
-    showScreen('menu');
-  }
-};
-
-/* =========================================================
-   ONLINE (PeerJS)
-========================================================= */
-function genCode(){
-  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s='';for(let i=0;i<6;i++) s+=c[rnd(0,c.length-1)];
-  return s;
-}
-
-el('btnCreate').onclick=()=>{
-  APP.role='host';
-  APP.roomCode=genCode();
-  APP.myId=0;
-  APP.maxPlayers=8;
-  APP.lobbyPlayers=[{id:0,uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar,isHost:true}];
-  APP.peerConns={};
-  
-  el('codeDisp').textContent=APP.roomCode;
-  el('hostCtrl').style.display='block';
-  el('clientHint').style.display='none';
+  el('codeDisp').textContent = APP.roomCode;
+  el('hostCtrl').style.display = 'block';
+  el('clientHint').style.display = 'none';
   buildLobbyCounts();
   renderLobby();
-  showScreen('lobby');
+  showScreen('s-lobby');
   
   startHostPeer();
 };
 
 function startHostPeer() {
   if (APP.peer) APP.peer.destroy();
-  APP.peer = new Peer('masoi-'+APP.roomCode, PEER_CONFIG);
+  APP.peer = new Peer('masoi-' + APP.roomCode, PEER_CONFIG);
   APP.peerReady = false;
   
-  APP.peer.on('open', (id) => {
+  APP.peer.on('open', () => {
     APP.peerReady = true;
-    beep(680,.12,'sine',.04);
     broadcastLobby();
     renderLobby();
   });
   
-  APP.peer.on('connection', (conn) => {
-    conn.on('data', (data) => {
-      hostMsg({data, conn});
-    });
-    
+  APP.peer.on('connection', conn => {
+    conn.on('data', data => hostMsg({ data, conn }));
     conn.on('close', () => {
       const uuid = Object.keys(APP.peerConns).find(k => APP.peerConns[k] === conn);
       if (uuid) {
         delete APP.peerConns[uuid];
         APP.lobbyPlayers = APP.lobbyPlayers.filter(p => p.uuid !== uuid);
-        broadcastLobby(); renderLobby();
+        broadcastLobby();
+        renderLobby();
       }
     });
   });
   
-  APP.peer.on('error', (err) => {
+  APP.peer.on('error', err => {
     if (err.type === 'unavailable-id') {
       APP.roomCode = genCode();
       el('codeDisp').textContent = APP.roomCode;
       startHostPeer();
     } else {
-      alert('Lỗi máy chủ kết nối: ' + err.type + '\nThử tải lại trang hoặc đổi mạng.');
+      alert('Lỗi kết nối: ' + err.type);
     }
   });
 }
 
-el('btnJoin').onclick=()=>{
-  const code=(el('inCode').value||'').trim().toUpperCase();
-  if(code.length<4){alert('Mã phòng không hợp lệ');return;}
+el('btnJoin').onclick = () => {
+  const code = (el('inCode').value || '').trim().toUpperCase();
+  if (code.length < 4) return alert('Mã phòng không hợp lệ');
   
-  APP.role='client';
-  APP.roomCode=code;
+  APP.role = 'client';
+  APP.roomCode = code;
+  el('codeDisp').textContent = code;
+  el('hostCtrl').style.display = 'none';
+  el('clientHint').style.display = 'block';
+  el('lobbyList').innerHTML = '<div style="color:var(--muted);">Đang kết nối...</div>';
+  showScreen('s-lobby');
   
-  el('codeDisp').textContent=code;
-  el('hostCtrl').style.display='none';
-  el('clientHint').style.display='block';
-  el('lobbyList').innerHTML='<div class="waiting">Đang kết nối tới phòng</div>';
-  showScreen('lobby');
-  
-  if(APP.peer) APP.peer.destroy();
+  if (APP.peer) APP.peer.destroy();
   APP.peer = new Peer(PEER_CONFIG);
   
   APP.peer.on('open', () => {
-    APP.conn = APP.peer.connect('masoi-'+APP.roomCode);
-    
+    APP.conn = APP.peer.connect('masoi-' + APP.roomCode);
     APP.conn.on('open', () => {
-      beep(680,.12,'sine',.04);
-      APP.conn.send({t:'join',uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar});
-      el('lobbyList').innerHTML='<div class="waiting">Đã kết nối. Đang chờ dữ liệu phòng...</div>';
+      APP.conn.send({ t: 'join', uuid: APP.uuid, name: APP.user.name, avatar: APP.user.avatar });
     });
-    
-    APP.conn.on('data', (data) => {
-      clientMsg({data});
-    });
-    
-    APP.conn.on('close', () => {
-      alert('Mất kết nối với chủ phòng!');
-      showScreen('menu');
-    });
-    
-    APP.conn.on('error', (err) => {
-      el('lobbyList').innerHTML='<div class="muted">Lỗi kết nối: Không thể tạo đường truyền P2P.</div>';
-    });
+    APP.conn.on('data', data => clientMsg({ data }));
+    APP.conn.on('close', () => { alert('Mất kết nối!'); showScreen('s-menu'); });
   });
   
-  APP.peer.on('error', (err) => {
+  APP.peer.on('error', err => {
     if (err.type === 'peer-unavailable') {
-      el('lobbyList').innerHTML='<div class="muted">Không tìm thấy phòng. Chủ phòng có thể chưa mở hoặc mã sai.</div>';
+      el('lobbyList').innerHTML = '<div style="color:var(--blood-light);">Không tìm thấy phòng.</div>';
     } else {
-      el('lobbyList').innerHTML='<div class="muted">Lỗi mạng: ' + err.type + '</div>';
+      el('lobbyList').innerHTML = `<div style="color:var(--blood-light);">Lỗi: ${err.type}</div>`;
     }
   });
 };
 
-el('btnLeave').onclick=()=>{
-  if(APP.conn) APP.conn.close();
-  if(APP.peer) APP.peer.destroy();
-  APP.peer=null;APP.conn=null;APP.peerConns={};
-  APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];
-  showScreen('menu');
+el('btnLeave').onclick = () => {
+  if (APP.conn) APP.conn.close();
+  if (APP.peer) APP.peer.destroy();
+  APP.peer = null; APP.conn = null; APP.peerConns = {};
+  APP.role = null; APP.roomCode = null; APP.lobbyPlayers = [];
+  showScreen('s-menu');
 };
 
 el('btnCopyInvite').onclick = () => {
   const url = window.location.origin + window.location.pathname + '?room=' + APP.roomCode;
-  navigator.clipboard.writeText(url).then(() => {
-    alert('Đã copy link mời: ' + url + '\nGửi link này cho bạn bè để họ tham gia!');
-  }).catch(() => {
-    prompt('Copy link này:', url);
-  });
+  navigator.clipboard.writeText(url).then(() => alert('Đã copy link mời:\n' + url)).catch(() => prompt('Copy link:', url));
 };
 
-function buildLobbyCounts(){
-  const row=el('lobbyCountRow'); row.innerHTML='';
-  for(let n=4;n<=12;n++){
-    const b=document.createElement('button');
-    b.className='cbtn'+(n===APP.maxPlayers?' on':'');
-    b.textContent=n;
-    b.onclick=()=>{
-      row.querySelectorAll('.cbtn').forEach(x=>x.classList.remove('on'));
-      b.classList.add('on');
-      APP.maxPlayers=n; broadcastLobby(); renderLobby();
-    };
+function buildLobbyCounts() {
+  const row = el('lobbyCountRow');
+  row.innerHTML = '';
+  for (let n = 4; n <= 12; n++) {
+    const b = document.createElement('button');
+    b.className = 'cbtn' + (n === APP.maxPlayers ? ' on' : '');
+    b.textContent = n;
+    b.onclick = () => { row.querySelectorAll('.cbtn').forEach(x => x.classList.remove('on')); b.classList.add('on'); APP.maxPlayers = n; broadcastLobby(); renderLobby(); };
     row.appendChild(b);
   }
 }
 
-function renderLobby(){
-  if(!APP.lobbyPlayers.length) return;
-  const list=el('lobbyList'); list.innerHTML='';
-  const max=APP.maxPlayers||8;
-  APP.lobbyPlayers.slice(0,max).forEach(lp=>{
-    const d=document.createElement('div');
-    d.className='lobbyItem';
-    d.innerHTML=`<div class="lav">${lp.avatar}</div>
-      <div class="lname">${lp.name}</div>
-      ${lp.isHost?'<div class="ltag">Chủ phòng</div>':''}`;
+function renderLobby() {
+  const list = el('lobbyList');
+  list.innerHTML = '';
+  APP.lobbyPlayers.forEach(lp => {
+    const d = document.createElement('div');
+    d.style = 'display:flex; align-items:center; padding:10px; background:var(--panel-2); border-radius:8px; margin-bottom:8px;';
+    d.innerHTML = `<div style="font-size:20px; margin-right:10px;">${lp.avatar}</div>
+      <div style="font-size:14px; font-weight:600; flex:1; text-align:left;">${lp.name}</div>
+      ${lp.isHost ? '<div style="font-size:10px; color:var(--gold);">Chủ phòng</div>' : ''}`;
     list.appendChild(d);
   });
-  const botsNeeded=Math.max(0,max-APP.lobbyPlayers.length);
-  for(let i=0;i<Math.min(botsNeeded,4);i++){
-    const d=document.createElement('div');
-    d.className='lobbyItem bot';
-    d.innerHTML=`<div class="lav">🤖</div><div class="lname">Bot (tự động lấp)</div><div class="ltag">Sẽ thêm</div>`;
+  const bots = Math.max(0, APP.maxPlayers - APP.lobbyPlayers.length);
+  if (bots > 0) {
+    const d = document.createElement('div');
+    d.style = 'padding:10px; color:var(--muted); font-size:12px; font-style:italic; border:1px dashed var(--line); border-radius:8px;';
+    d.textContent = `Sẽ thêm ${bots} Bot tự động khi bắt đầu.`;
     list.appendChild(d);
   }
   el('btnStartOnline').disabled = !(APP.peerReady && APP.lobbyPlayers.length >= 1);
 }
 
-function broadcastLobby(){
-  const safePlayers = APP.lobbyPlayers.map(p=>({
-    id:p.id, uuid:p.uuid, name:p.name, avatar:p.avatar, isHost:p.isHost
-  }));
-  broadcast({t:'lobby',players:safePlayers,maxPlayers:APP.maxPlayers});
+function broadcastLobby() {
+  const safe = APP.lobbyPlayers.map(p => ({ id: p.id, uuid: p.uuid, name: p.name, avatar: p.avatar, isHost: p.isHost }));
+  Object.values(APP.peerConns).forEach(c => { if (c.open) c.send({ t: 'lobby', players: safe, maxPlayers: APP.maxPlayers }); });
 }
 
-function hostMsg({data:m, conn}){
-  if(m.t==='join'){
-    if(APP.lobbyPlayers.length>=APP.maxPlayers){
-      conn.send({t:'full'});
-      return;
-    }
-    if(APP.lobbyPlayers.find(p=>p.uuid===m.uuid)) return;
-    
-    const id=APP.lobbyPlayers.length;
-    APP.lobbyPlayers.push({id,uuid:m.uuid,name:m.name,avatar:m.avatar,isHost:false});
+function hostMsg({ data: m, conn }) {
+  if (m.t === 'join') {
+    if (APP.lobbyPlayers.length >= APP.maxPlayers) { conn.send({ t: 'full' }); return; }
+    if (APP.lobbyPlayers.find(p => p.uuid === m.uuid)) return;
+    APP.lobbyPlayers.push({ id: APP.lobbyPlayers.length, uuid: m.uuid, name: m.name, avatar: m.avatar, isHost: false });
     APP.peerConns[m.uuid] = conn;
-    
-    broadcastLobby(); 
+    broadcastLobby();
     renderLobby();
-  } else if(m.t==='leave'){
-    APP.lobbyPlayers=APP.lobbyPlayers.filter(p=>p.uuid!==m.uuid);
-    broadcastLobby(); renderLobby();
-  } else if(m.t==='reply'){
-    const r=pendingPrompts[m.id];
-    if(r){ delete pendingPrompts[m.id]; r(m.value); }
-  } else if(m.t==='ready'){
-    APP.readyCount=(APP.readyCount||0)+1;
-  } else if(m.t==='relay'){
-    sendTo(m.to, m.msg);
+  } else if (m.t === 'reply') {
+    const r = pendingPrompts[m.id];
+    if (r) { delete pendingPrompts[m.id]; r(m.value); }
+  } else if (m.t === 'relay') {
+    const c = APP.peerConns[m.to];
+    if (c && c.open) c.send(m.msg);
   }
 }
 
-function clientMsg({data:m}){
-  if(m.to && m.to!==APP.uuid) return;
-  if(m.t==='lobby'){
-    APP.lobbyPlayers=m.players;
-    APP.maxPlayers=m.maxPlayers;
-    const mine=APP.lobbyPlayers.find(p=>p.uuid===APP.uuid);
-    if(mine) APP.myId=mine.id;
-    el('codeDisp').textContent=APP.roomCode;
+function clientMsg({ data: m }) {
+  if (m.to && m.to !== APP.uuid) return;
+  if (m.t === 'lobby') {
+    APP.lobbyPlayers = m.players;
+    APP.maxPlayers = m.maxPlayers;
+    const mine = APP.lobbyPlayers.find(p => p.uuid === APP.uuid);
+    if (mine) APP.myId = mine.id;
+    el('codeDisp').textContent = APP.roomCode;
     renderLobby();
-  } else if(m.t==='full'){
-    el('lobbyList').innerHTML='<div class="muted" style="padding:20px">Phòng đã đầy.</div>';
-  } else if(m.t==='start'){
-    APP.myId=m.yourId;
-    APP.myRole=m.yourRole;
-    handleClientStart();
-  } else if(m.t==='state'){
-    G.players=m.players;
-    G.day=m.day;
-    G.phase=m.phase;
+  } else if (m.t === 'full') {
+    el('lobbyList').innerHTML = '<div style="color:var(--blood-light);">Phòng đã đầy!</div>';
+  } else if (m.t === 'start') {
+    APP.myId = m.yourId;
+    APP.myRole = m.yourRole;
+    showScreen('s-game');
+    el('chatLog').innerHTML = '';
+    setPhase('night');
+    el('roleMini').innerHTML = `Vai trò: <b>${ROLES[APP.myRole].name}</b>`;
+    showRoleReveal(APP.myRole);
+    APP.onRoleOk = () => {
+      el('roleOv').classList.add('hide');
+      APP.conn.send({ t: 'ready', uuid: APP.uuid });
+      showWaiting('Đang chờ chủ phòng...');
+    };
+  } else if (m.t === 'state') {
+    G.players = m.players;
+    G.day = m.day;
+    G.phase = m.phase;
     renderPlayers();
     setPhase(m.phase);
     
-    // Nếu người chơi đã chết, hiển thị thông báo
-    const me = G.players.find(p=>p.id===APP.myId);
-    if(me && !me.alive && me.role !== 'hunter'){
-        el('actions').innerHTML='<div class="waiting">Bạn đã chết. Hãy theo dõi ván đấu.</div>';
+    const me = G.players.find(p => p.id === APP.myId);
+    if (me && !me.alive && me.role !== 'hunter') {
+      el('actionArea').innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">Bạn đã chết. Hãy theo dõi ván đấu.</div>';
     }
-  } else if(m.t==='log'){
-    log(m.html,m.cls);
-  } else if(m.t==='prompt'){
+  } else if (m.t === 'log') {
+    addLog(m.html, m.type);
+  } else if (m.t === 'prompt') {
     handleClientPrompt(m);
-  } else if(m.t==='end'){
-    renderEnd(m.winner,m.roles,APP.myRole,APP.myId);
-  } else if(m.t==='friend_req'){
-    showFriendRequest(m.from);
-  } else if(m.t==='friend_acc'){
+  } else if (m.t === 'end') {
+    renderEnd(m.winner, m.roles, APP.myRole, APP.myId);
+  } else if (m.t === 'friend_req') {
+    showFriendReq(m.from);
+  } else if (m.t === 'friend_acc') {
     addFriend(m.from.name, m.from.avatar, m.from.uuid);
-    alert(m.from.name + ' đã chấp nhận lời mời kết bạn!');
+    alert(m.from.name + ' đã chấp nhận kết bạn!');
   }
 }
 
-async function handleClientStart(){
-  showScreen('dealing');
-  playDealingAnimation();
-  await wait(1800);
-  showScreen('game');
-  clearLog();
-  setPhase('night');
-  el('roleMini').innerHTML=`Vai trò: <b>${ROLES[APP.myRole].name}</b>`;
-  showRoleReveal(APP.myRole);
-  APP.onRoleOk=()=>{
-    el('roleOv').classList.add('hide');
-    if(APP.conn) APP.conn.send({t:'ready',uuid:APP.uuid});
-    showWaiting('Đang chờ mọi người sẵn sàng');
-  };
-}
-
-function handleClientPrompt(m){
-  const me = G.players.find(p=>p.id===APP.myId);
-  if(me && !me.alive && me.role !== 'hunter'){
-    if(APP.conn) APP.conn.send({t:'reply',id:m.id,value:null});
+async function handleClientPrompt(m) {
+  const me = G.players.find(p => p.id === APP.myId);
+  if (me && !me.alive && me.role !== 'hunter') {
+    APP.conn.send({ t: 'reply', id: m.id, value: null });
     return;
   }
   
-  if(m.kind==='choice'){
-    if(m.payload.logMsg) log(m.payload.logMsg,'night');
-    showChoices(m.payload.options).then(c=>{
-      if(APP.conn) APP.conn.send({t:'reply',id:m.id,value:c});
-      showWaiting('Đang chờ');
-    });
-  } else {
-    showTargets(m.payload.prompt,m.payload.candidates).then(t=>{
-      if(APP.conn) APP.conn.send({t:'reply',id:m.id,value:t});
-      showWaiting('Đang chờ');
-    });
+  if (m.kind === 'text') {
+    const text = await showDefenseModal();
+    APP.conn.send({ t: 'reply', id: m.id, value: text });
+    showWaiting('Đang chờ...');
+  } else if (m.kind === 'choice') {
+    if (m.payload.logMsg) addLog(m.payload.logMsg, 'sys');
+    const c = await showChoices(m.payload.options);
+    APP.conn.send({ t: 'reply', id: m.id, value: c });
+    showWaiting('Đang chờ...');
+  } else if (m.kind === 'target') {
+    if (m.payload.prompt) addLog(m.payload.prompt, 'sys');
+    const t = await showTargets(null, m.payload.candidates);
+    APP.conn.send({ t: 'reply', id: m.id, value: t });
+    showWaiting('Đang chờ...');
   }
 }
 
-el('btnStartOnline').onclick=async()=>{
-  if(APP.lobbyPlayers.length<1) return;
-  // AUTO-FILL WITH BOTS
-  const humans=APP.lobbyPlayers.slice(0,APP.maxPlayers).map((lp,i)=>({
-    id:i,uuid:lp.uuid,name:lp.name,avatar:lp.avatar,isHost:i===0
+el('btnStartOnline').onclick = async () => {
+  if (APP.lobbyPlayers.length < 1) return;
+  
+  const humans = APP.lobbyPlayers.slice(0, APP.maxPlayers).map((lp, i) => ({
+    id: i, uuid: lp.uuid, name: lp.name, avatar: lp.avatar, isHost: i === 0
   }));
-  const botsNeeded=Math.max(0,APP.maxPlayers-humans.length);
-  const bots=makeBots(botsNeeded);
-
-  G.players=buildPlayers(humans,bots);
+  const botsNeeded = Math.max(0, APP.maxPlayers - humans.length);
+  const bots = makeBots(botsNeeded);
+  
+  G.players = buildPlayers(humans, bots);
   assignRoles(G.players);
-
-  // Send roles to clients
-  G.players.forEach(p=>{
-    if(p.isHost||!p.uuid) return;
-    sendTo(p.uuid,{t:'start',yourId:p.id,yourRole:p.role});
+  
+  G.players.forEach(p => {
+    if (p.isHost || !p.uuid) return;
+    const c = APP.peerConns[p.uuid];
+    if (c && c.open) c.send({ t: 'start', yourId: p.id, yourRole: p.role });
   });
-
-  APP.myId=0;
-  APP.readyCount=1;
-  APP.totalHumans=humans.length;
-
-  broadcast({t:'state',players:publicPlayers(),day:G.day,phase:'night'});
-  broadcast({t:'log',html:`🌙 <b>Đêm 1</b> — Sương mù tràn qua những mái nhà.`,cls:'night'});
-
-  showScreen('dealing');
-  playDealingAnimation();
-  await wait(1800);
-
-  showScreen('game');
-  clearLog();
-  renderPlayers();
+  
+  APP.myId = 0;
+  showScreen('s-game');
+  el('chatLog').innerHTML = '';
   setPhase('night');
-  bLog('─────────────────────────','sep');
-  bLog(`🌙 <b>Đêm 1</b> — Ván đấu bắt đầu.`,'night');
-  el('roleMini').innerHTML=`Vai trò: <b>${ROLES[G.players[0].role].name}</b>`;
+  el('roleMini').innerHTML = `Vai trò: <b>${ROLES[G.players[0].role].name}</b>`;
   showRoleReveal(G.players[0].role);
-
-  APP.onRoleOk=async()=>{
+  
+  APP.onRoleOk = () => {
     el('roleOv').classList.add('hide');
-    showWaiting('Đang chờ mọi người sẵn sàng...');
-    const t0=Date.now();
-    while(APP.readyCount<APP.totalHumans && Date.now()-t0<15000){
-      await wait(200);
-    }
-    setTimeout(()=>gameLoop(),300);
+    broadcastState();
+    gameLoop();
   };
 };
 
-/* =========================================================
-   BUILD PLAYERS
-========================================================= */
-function makeBots(n){
-  const names=shuffle([...BOT_NAMES]);
-  const avs=shuffle([...AVATARS]);
-  const out=[];
-  for(let i=0;i<n;i++){
-    out.push({name:names[i%names.length],avatar:avs[i%avs.length]});
-  }
-  return out;
-}
-
-function buildPlayers(humans,bots){
-  const ps=[];
-  let id=0;
-  humans.forEach(h=>{
-    ps.push({
-      id:h.id!=null?h.id:id++,
-      uuid:h.uuid,name:h.name,avatar:h.avatar,
-      isHost:!!h.isHost,isBot:false,alive:true,role:null,
-      traits:{intel:5,bold:5,lie:5,gullible:5,temper:5,persuade:5,fear:5,memory:5},
-      sus:{},trust:{},memory:[],canVote:true,defendedToday:false
-    });
-  });
-  bots.forEach(b=>{
-    ps.push({
-      id:id++,uuid:null,name:b.name,avatar:b.avatar,
-      isHost:false,isBot:true,alive:true,role:null,
-      traits:{
-        intel:rnd(3,9),bold:rnd(2,10),lie:rnd(2,10),gullible:rnd(2,10),
-        temper:rnd(2,10),persuade:rnd(2,10),fear:rnd(2,10),memory:rnd(3,10)
-      },
-      sus:{},trust:{},memory:[],canVote:true,defendedToday:false
-    });
-  });
-  return ps;
-}
-
-function assignRoles(ps){
-  const roles=shuffle([...(COMP[ps.length]||COMP[8])]);
-  ps.forEach((p,i)=>{p.role=roles[i];});
-  ps.forEach(p=>{
-    ps.forEach(o=>{
-      if(o.id===p.id) return;
-      p.sus[o.id]=rnd(5,28);
-      p.trust[o.id]=rnd(15,45);
-    });
-  });
-  const wolves=ps.filter(isWolf);
-  wolves.forEach(w=>wolves.forEach(o=>{
-    if(o.id!==w.id){w.trust[o.id]=95;w.sus[o.id]=0;}
-  }));
-  return ps;
-}
-
-/* =========================================================
-   DEALING ANIMATION
-========================================================= */
-function playDealingAnimation(){
-  const row=el('cardsRow');
-  row.innerHTML='';
-  for(let i=0;i<8;i++){
-    const c=document.createElement('div');
-    c.className='dealCard';
-    c.textContent='🂠';
-    c.style.animationDelay=(i*0.09)+'s';
-    row.appendChild(c);
-  }
-  const texts=['Xáo trộn bộ bài...','Phát bài cho từng người...','Úp bài...','Chuẩn bị bước vào đêm...'];
-  let i=0;
-  const t=el('dealText');
-  t.textContent=texts[0];
-  const iv=setInterval(()=>{
-    i++;
-    if(i>=texts.length){clearInterval(iv);return;}
-    t.textContent=texts[i];
-    beep(400+i*80,.05,'sine',.02);
-  },420);
-}
-
-/* =========================================================
-   ROLE REVEAL
-========================================================= */
-function showRoleReveal(roleKey){
-  const r=ROLES[roleKey];
-  if(!r) return;
-  el('roleIcon').textContent=r.icon;
-  el('roleIcon').style.color=r.color;
-  el('roleName').textContent=r.name;
-  el('roleName').style.color=r.color;
-  el('roleTeam').textContent=r.teamName;
-  el('roleDesc').textContent=r.desc;
-  el('roleOv').classList.remove('hide');
-  beep(320,.5,'sine',.05);
-  setTimeout(()=>beep(480,.4,'sine',.04),260);
-}
-el('btnRoleOk').onclick=()=>{
-  if(APP.onRoleOk) APP.onRoleOk();
-};
-
-/* =========================================================
-   MAIN LOOP
-========================================================= */
-async function gameLoop(){
-  while(!G.over){
-    await nightPhase();
-    if(G.over) break;
-    const r1=checkWin(); if(r1){ endGame(r1); break; }
-    await dayPhase();
-    if(G.over) break;
-    const r2=checkWin(); if(r2){ endGame(r2); break; }
-    G.day++;
-  }
-}
-
-/* =========================================================
-   NIGHT
-========================================================= */
-async function nightPhase(){
-  setPhase('night');
-  G.nightKill=null;G.nightHeal=null;G.nightPoison=null;G.guardTarget=null;
-  bLog('─────────────────────────','sep');
-  bLog(`🌙 <b>Đêm ${G.day}</b> — Sương mù tràn qua những mái nhà. Những ngọn nến lần lượt tắt.`,'night');
-  beep(180,.6,'sine',.05);
-  await wait(1500); // Tăng thời gian chờ
-
-  const alive=()=>G.players.filter(p=>p.alive);
-
-  /* --- WOLVES --- */
-  const wolves=alive().filter(isWolf);
-  if(wolves.length){
-    const targets=alive().filter(p=>!isWolf(p));
-    if(targets.length){
-      const votes={};
-      for(const w of wolves){
-        let t=null;
-        if(w.isBot){
-          t=npcWolfChoice(w,targets);
-        } else {
-          t=await ask(w.id,'target',{
-            prompt:'🐺 <b>Bầy Sói thức dậy.</b> Chọn ai để sát hại đêm nay?',
-            candidates:targets
-          });
-        }
-        if(t!=null) votes[t]=(votes[t]||0)+1;
-      }
-      let best=null,bv=0;
-      Object.entries(votes).forEach(([id,v])=>{if(v>bv){bv=v;best=parseInt(id);}});
-      G.nightKill=best;
-    }
-  }
-
-  /* --- WHITE WOLF --- */
-  const ww=alive().find(p=>p.role==='whitewolf');
-  if(ww && !G.whiteWolfUsed){
-    const others=alive().filter(p=>isWolf(p)&&p.id!==ww.id);
-    if(others.length){
-      let use=false;
-      if(ww.isBot){
-        use = Math.random()<0.12;
-      } else {
-        const c=await ask(ww.id,'choice',{
-          options:[
-            {label:'Dùng nanh vuốt bạc — giết một con Sói khác',desc:'Một lần duy nhất trong ván.'},
-            {label:'Giữ lại — chưa phải lúc',desc:'Bầy Sói vẫn còn hữu ích.'}
-          ]
-        });
-        use = c===0;
-      }
-      if(use){
-        G.whiteWolfUsed=true;
-        let t=null;
-        if(ww.isBot){ t=pick(others).id; }
-        else {
-          t=await ask(ww.id,'target',{
-            prompt:'🌕 Ngươi chọn con Sói nào để phản bội?',
-            candidates:others
-          });
-        }
-        if(t!=null) G.nightPoison=t;
-      }
-    }
-  }
-
-  /* --- SEER --- */
-  const seer=alive().find(p=>p.role==='seer');
-  if(seer){
-    const cands=alive().filter(p=>p.id!==seer.id);
-    if(cands.length){
-      if(seer.isBot){
-        const t=pick(cands);
-        const v=seerView(t);
-        seer.memory.push({type:'seer',target:t.id,result:v});
-        if(v==='wolf'){seer.sus[t.id]=100;seer.trust[t.id]=0;}
-        else{seer.sus[t.id]=clamp(seer.sus[t.id],0,10);seer.trust[t.id]=80;}
-      } else {
-        const t=await ask(seer.id,'target',{
-          prompt:'🔮 <b>Ngươi là Tiên Tri.</b> Soi ai đêm nay?',
-          candidates:cands
-        });
-        if(t!=null){
-          const target=G.players.find(p=>p.id===t);
-          const v=seerView(target);
-          seer.memory.push({type:'seer',target:t,result:v});
-          if(APP.role==='solo'||(APP.role==='host'&&seer.isHost)){
-            log(`🔮 Bạn soi <b>${target.name}</b>: <b style="color:${v==='wolf'?'#d94b4b':'#5fbf7f'}">${v==='wolf'?'MA SÓI':'DÂN LÀNG'}</b>`,'good');
-          } else {
-            sendTo(seer.uuid,{t:'log',html:`🔮 Bạn soi <b>${target.name}</b>: <b style="color:${v==='wolf'?'#d94b4b':'#5fbf7f'}">${v==='wolf'?'MA SÓI':'DÂN LÀNG'}</b>`,cls:'good'});
-          }
-          beep(v==='wolf'?220:660,.35,'sine',.05);
-        }
-      }
-    }
-  }
-
-  /* --- GUARD --- */
-  const guard=alive().find(p=>p.role==='guard');
-  if(guard){
-    const cands=alive().filter(p=>p.id!==G.guardLast);
-    if(cands.length){
-      if(guard.isBot){
-        cands.sort((a,b)=>(guard.trust[b.id]||0)-(guard.trust[a.id]||0));
-        G.guardTarget=cands[0].id;
-      } else {
-        G.guardTarget=await ask(guard.id,'target',{
-          prompt:'🛡️ <b>Ngươi là Bảo Vệ.</b> Chọn người che chở đêm nay:',
-          candidates:cands
-        });
-      }
-    }
-    G.guardLast=G.guardTarget;
-  }
-
-  /* --- WITCH --- */
-  const witch=alive().find(p=>p.role==='witch');
-  if(witch){
-    if(witch.isBot){
-      if(!G.witchHealUsed && G.nightKill){
-        const v=G.players.find(p=>p.id===G.nightKill);
-        if(v && (witch.trust[v.id]||0)>60 && Math.random()<0.55){
-          G.witchHealUsed=true;G.nightHeal=G.nightKill;
-        }
-      }
-      if(!G.witchPoisonUsed && !G.nightPoison && Math.random()<0.30){
-        const cands=alive().filter(p=>p.id!==witch.id&&(witch.sus[p.id]||0)>68);
-        if(cands.length){
-          G.witchPoisonUsed=true;
-          G.nightPoison=cands.sort((a,b)=>(witch.sus[b.id]||0)-(witch.sus[a.id]||0))[0].id;
-        }
-      }
-    } else {
-      const opts=[];
-      if(!G.witchHealUsed && G.nightKill) opts.push({key:'heal',label:'🧪 Dùng bình CỨU — cứu người bị Sói cắn',desc:'Bạn sẽ không biết đó là ai cho tới khi dùng.'});
-      if(!G.witchPoisonUsed) opts.push({key:'poison',label:'☠️ Dùng bình ĐỘC — giết một người',desc:'Mỗi ván chỉ một lần.'});
-      opts.push({key:'none',label:'Không làm gì — giữ thuốc',desc:'Thuốc quý, đừng phí.'});
-      if(opts.length>1){
-        const c=await ask(witch.id,'choice',{
-          logMsg:'🧪 <b>Ngươi là Phù Thủy.</b>',
-          options:opts.map(o=>({label:o.label,desc:o.desc}))
-        });
-        if(c!=null){
-          const chosen=opts[c];
-          if(chosen.key==='heal'){
-            G.witchHealUsed=true;G.nightHeal=G.nightKill;
-          } else if(chosen.key==='poison'){
-            G.witchPoisonUsed=true;
-            const cands=alive().filter(p=>p.id!==witch.id);
-            const t=await ask(witch.id,'target',{
-              prompt:'☠️ Ngươi rót độc vào ai?',
-              candidates:cands
-            });
-            if(t!=null) G.nightPoison=t;
-          }
-        }
-      }
-    }
-  }
-
-  /* --- CUPID --- */
-  if(G.day===1){
-    const cupid=alive().find(p=>p.role==='cupid');
-    if(cupid){
-      const cands=alive().filter(p=>p.id!==cupid.id);
-      if(cands.length>=2){
-        if(cupid.isBot){
-          const s=shuffle(cands);
-          G.lovers=[s[0].id,s[1].id];
-        } else {
-          const a=await ask(cupid.id,'target',{
-            prompt:'💘 <b>Ngươi là Cupid.</b> Chọn người tình thứ nhất:',
-            candidates:cands
-          });
-          if(a!=null){
-            const b=await ask(cupid.id,'target',{
-              prompt:'💘 Chọn người tình thứ hai:',
-              candidates:cands.filter(p=>p.id!==a)
-            });
-            if(b!=null) G.lovers=[a,b];
-          }
-        }
-      }
-    }
-  }
-
-  await wait(1000);
-  await resolveNight();
-}
-
-function npcWolfChoice(w,targets){
-  let best=null,bestScore=-999;
-  targets.forEach(t=>{
-    let score=rnd(0,10);
-    G.players.forEach(p=>{
-      if(p.alive&&!isWolf(p)) score+=(p.trust[t.id]||0)*0.35;
-    });
-    score+=(w.sus[t.id]||0)*0.5;
-    if(t.role==='seer'||t.role==='guard') score+=12;
-    if(score>bestScore){bestScore=score;best=t;}
-  });
-  return best?best.id:null;
-}
-
-async function resolveNight(){
-  const deaths=new Set();
-  if(G.nightKill){
-    const saved=(G.guardTarget===G.nightKill)||(G.nightHeal===G.nightKill);
-    if(!saved) deaths.add(G.nightKill);
-    else bLog('🛡️ Có ai đó đã sống sót qua đêm nhờ một bàn tay vô hình...','good');
-  }
-  if(G.nightPoison && G.nightPoison!==G.nightKill) deaths.add(G.nightPoison);
-
-  for(const id of [...deaths]){
-    if(G.lovers.includes(id)){
-      const other=G.lovers.find(x=>x!==id);
-      if(other&&!deaths.has(other)) deaths.add(other);
-    }
-  }
-
-  if(deaths.size===0){
-    bLog('🌅 Bình minh lên. Không ai chết trong đêm nay.','day');
-    await wait(2000); // Tăng thời gian chờ
-  } else {
-    for(const id of deaths){
-      const p=G.players.find(x=>x.id===id);
-      if(p&&p.alive){
-        p.alive=false;
-        beep(140,.6,'sawtooth',.06);
-        await wait(800); // Tăng thời gian chờ
-      }
-    }
-    bPlayers();
-    await wait(2000); // Tăng thời gian chờ
-  }
-}
-
-/* =========================================================
-   DAY
-========================================================= */
-async function dayPhase(){
-  setPhase('day');
-  bLog('─────────────────────────','sep');
-  bLog(`☀️ <b>Ngày ${G.day}</b> — Cả làng tập trung tại quảng trường.`,'day');
-  beep(520,.3,'sine',.04);
-  await wait(1500); // Tăng thời gian chờ
-
-  G.players.forEach(p=>{p.defendedToday=false;});
-
-  const dead=G.players.filter(p=>!p.alive);
-  if(dead.length){
-    const last=dead[dead.length-1];
-    bLog(`⚰️ Người ta tìm thấy <b>${last.name}</b> — vai trò thật: <b>${ROLES[last.role].name}</b>.`,'death');
-  } else {
-    bLog('Không ai chết đêm qua. Sự im lặng bao trùm quảng trường.','eff');
-  }
-
-  if(Math.random()<0.45){ await randomEvent(); await wait(800); }
-
-  await defenseRound();
-  await wait(500);
-
-  const eliminated=await votePhase();
-  if(eliminated!=null) await executePlayer(eliminated);
-}
-
-async function randomEvent(){
-  const alive=G.players.filter(p=>p.alive);
-  if(alive.length<3) return;
-  const evts=[
-    ()=>{
-      const t=pick(alive);
-      bLog(`📜 <b>Sự kiện:</b> Một lá thư nặc danh được nhét dưới cửa nhà <b>${t.name}</b>. Không ai biết ai gửi.`,'day');
-      G.players.filter(p=>p.alive&&p.isBot).forEach(n=>{
-        if(n.id!==t.id) n.sus[t.id]=clamp((n.sus[t.id]||0)+rnd(3,12),0,100);
-      });
-    },
-    ()=>{
-      const t=pick(alive);
-      bLog(`👣 <b>Sự kiện:</b> Dấu chân lạ xuất hiện trước cửa nhà <b>${t.name}</b>, kéo về phía rừng.`,'day');
-      G.players.filter(p=>p.alive&&p.isBot).forEach(n=>{
-        if(n.id!==t.id) n.sus[t.id]=clamp((n.sus[t.id]||0)+rnd(6,16),0,100);
-      });
-    },
-    ()=>{
-      const a=pick(alive);
-      const b=pick(alive.filter(p=>p.id!==a.id));
-      if(!b) return;
-      bLog(`🗣️ <b>Sự kiện:</b> <b>${a.name}</b> và <b>${b.name}</b> tranh cãi gay gắt. Ai đó đã nói dối.`,'day');
-      G.players.filter(p=>p.alive&&p.isBot).forEach(n=>{
-        n.sus[a.id]=clamp((n.sus[a.id]||0)+rnd(2,9),0,100);
-        n.sus[b.id]=clamp((n.sus[b.id]||0)+rnd(2,9),0,100);
-      });
-    },
-    ()=>{
-      const t=pick(alive);
-      bLog(`🤕 <b>Sự kiện:</b> <b>${t.name}</b> bị thương trong đêm — nhưng vẫn sống.`,'day');
-      G.players.filter(p=>p.alive&&p.isBot).forEach(n=>{
-        if(n.id!==t.id) n.sus[t.id]=clamp((n.sus[t.id]||0)+rnd(2,8),0,100);
-      });
-    },
-    ()=>{
-      const t=pick(alive);
-      bLog(`🕵️ <b>Sự kiện:</b> Có người thấy <b>${t.name}</b> rời khỏi nhà lúc nửa đêm.`,'day');
-      G.players.filter(p=>p.alive&&p.isBot).forEach(n=>{
-        if(n.id!==t.id) n.sus[t.id]=clamp((n.sus[t.id]||0)+rnd(8,20),0,100);
-      });
-    },
-    ()=>{
-      bLog('🔔 <b>Sự kiện:</b> Chuông nhà thờ vang lên giữa ban ngày. Hoang mang lan rộng.','day');
-      G.players.filter(p=>p.alive&&p.isBot).forEach(n=>{
-        G.players.filter(p=>p.alive).forEach(o=>{
-          if(o.id!==n.id&&Math.random()<0.4) n.sus[o.id]=clamp((n.sus[o.id]||0)+rnd(2,7),0,100);
-        });
-      });
-    }
-  ];
-  pick(evts)();
-}
-
-async function defenseRound(){
-  bLog('🗣️ <b>Lượt biện minh.</b> Mỗi người có một lần lên tiếng.','day');
-  await wait(1500); // Tăng thời gian chờ
-
-  const order=shuffle(G.players.filter(p=>p.alive));
-
-  for(const actor of order){
-    if(!actor.alive||actor.defendedToday) continue;
-
-    if(actor.isBot){
-      botDefend(actor);
-      await wait(2000); // Tăng thời gian chờ giữa các bot
-    } else {
-      await humanDefend(actor);
-      await wait(1500);
-    }
-  }
-}
-
-async function humanDefend(actor){
-  if(!actor.alive) return;
-  const text=await showDefenseModal(actor);
-  if(text===null){
-    bLog(`<b>${actor.name}</b>: "..."`,'player');
-    G.players.filter(p=>p.alive&&p.id!==actor.id).forEach(p=>{
-      p.sus[actor.id]=clamp((p.sus[actor.id]||0)+rnd(1,6),0,100);
-    });
-    actor.defendedToday=true;
-    return;
-  }
-  actor.defendedToday=true;
-  bLog(`<b>${actor.avatar} ${actor.name}</b>: "${escapeHtml(text)}"`,'player');
-  applyDefenseEffects(actor,text);
-}
-
-function botDefend(actor){
-  const lines=[
-    'Tôi là dân làng. Các người đang nghi ngờ sai người.',
-    'Nếu tôi là Sói, tôi đã chẳng nói nhiều đến vậy.',
-    'Hãy nhìn vào hành động, không phải lời nói.',
-    'Tôi chỉ đang quan sát. Im lặng không có nghĩa là tội lỗi.',
-    'Đêm qua tôi ở nhà. Không ai chứng minh được điều ngược lại.',
-    'Tôi bắt đầu nghi ngờ kẻ đang cố đẩy nghi ngờ về phía tôi.',
-    'Các người nên nhìn lại những gì đã xảy ra thay vì chỉ tay vào tôi.'
-  ];
-  const text=pick(lines);
-  actor.defendedToday=true;
-  bLog(`<b>${actor.avatar} ${actor.name}</b>: "${text}"`,'npc');
-  applyDefenseEffects(actor,text);
-}
-
-function applyDefenseEffects(actor,text){
-  const t=text.toLowerCase();
-  let defend=0,attack=0,reason=0;
-  if(/vô tội|tin tôi|dân làng|tôi thề|không có gì để giấu/.test(t)) defend+=2;
-  if(/sói|phản bội|đáng ngờ|nghi ngờ/.test(t)) attack+=2;
-  if(/bằng chứng|chứng minh|lý lẽ|suy luận|hợp lý/.test(t)) reason+=2;
-  if(/im lặng|quan sát|theo dõi/.test(t)) defend+=1;
-  if(/đổ lỗi|đẩy|chỉ tay|đánh lạc hướng/.test(t)) attack+=1;
-
-  G.players.filter(p=>p.alive&&p.id!==actor.id).forEach(p=>{
-    if(defend>0) p.sus[actor.id]=clamp((p.sus[actor.id]||0)-defend*rnd(2,5),0,100);
-    if(attack>0){
-      const others=G.players.filter(o=>o.alive&&o.id!==p.id&&o.id!==actor.id);
-      if(others.length){
-        const target=others.sort((a,b)=>(p.sus[b.id]||0)-(p.sus[a.id]||0))[0];
-        p.sus[target.id]=clamp((p.sus[target.id]||0)+attack*rnd(2,5),0,100);
-      }
-      p.sus[actor.id]=clamp((p.sus[actor.id]||0)+Math.floor(attack*0.5),0,100);
-    }
-    if(reason>0&&p.traits.intel>5) p.sus[actor.id]=clamp((p.sus[actor.id]||0)-2,0,100);
-  });
-  beep(500,.08,'triangle',.03);
-}
-
-function showDefenseModal(actor){
-  return new Promise(resolve=>{
-    el('defTitle').textContent='Biện minh của bạn';
-    el('defSub').textContent='Bạn có một lần lên tiếng. Nhập lời biện minh, hoặc bỏ qua.';
-    el('defText').value='';
-    el('defOv').classList.remove('hide');
-    el('defText').focus();
-
-    const finish=(val)=>{
-      el('defOv').classList.add('hide');
-      el('btnDefSend').onclick=null;
-      el('btnDefPass').onclick=null;
-      el('defText').onkeydown=null;
-      resolve(val);
-    };
-    el('btnDefSend').onclick=()=>{
-      const v=(el('defText').value||'').trim();
-      if(!v){ return; }
-      beep(600,.1,'sine',.04);
-      finish(v.slice(0,240));
-    };
-    el('btnDefPass').onclick=()=>{ beep(300,.1,'sine',.03); finish(null); };
-    el('defText').onkeydown=(e)=>{
-      if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); el('btnDefSend').click(); }
-    };
-  });
-}
-
-function npcVoteChoice(npc,candidates){
-  if(!candidates.length) return null;
-  let best=null,bestScore=-999;
-  candidates.forEach(c=>{
-    let score=(npc.sus[c.id]||0)-(npc.trust[c.id]||0)*0.28+rnd(-10,10)*(1-npc.traits.intel/12);
-    npc.memory.forEach(m=>{
-      if(m.type==='seer'&&m.target===c.id) score+=m.result==='wolf'?60:-40;
-    });
-    if(npc.traits.temper>7&&(npc.trust[c.id]||0)<22) score+=6;
-    if(npc.traits.gullible>7&&(npc.trust[c.id]||0)>60) score-=8;
-    if(score>bestScore){bestScore=score;best=c;}
-  });
-  return best?best.id:null;
-}
-
-async function votePhase(){
-  bLog('🗳️ <b>Cả làng bỏ phiếu.</b> Ai sẽ bị treo cổ hôm nay?','vote');
-  beep(400,.15,'square',.04);
-  await wait(1500); // Tăng thời gian chờ
-
-  let pool=G.players.filter(p=>p.alive).map(p=>p.id);
-  let round=0;
-
-  while(round<8){
-    round++;
-    if(round>1) bLog(`🗳️ <b>Vòng ${round}.</b> Bỏ phiếu lại giữa những người hòa phiếu.`,'vote');
-
-    const voters=G.players.filter(p=>p.alive&&p.canVote);
-    const votes={};
-    pool.forEach(id=>votes[id]=[]);
-
-    for(const voter of voters){
-      const cands=pool.filter(id=>id!==voter.id)
-        .map(id=>G.players.find(p=>p.id===id))
-        .filter(Boolean);
-      if(!cands.length) continue;
-
-      let choice=null;
-      if(voter.isBot){
-        choice=npcVoteChoice(voter,cands);
-      } else {
-        choice=await ask(voter.id,'target',{
-          prompt:`🗳️ Vòng ${round}: Bỏ phiếu treo cổ ai?`,
-          candidates:cands
-        });
-      }
-      if(choice!=null&&votes[choice]) votes[choice].push(voter.id);
-    }
-
-    voters.forEach(v=>{
-      const target=Object.keys(votes).find(k=>votes[k].includes(v.id));
-      if(target){
-        const t=G.players.find(p=>p.id==target);
-        if(t) bLog(`　${v.avatar} ${v.name} → <b>${t.name}</b>`,'eff');
-      }
-    });
-    await wait(1500); // Tăng thời gian chờ
-
-    let maxV=0,winners=[];
-    Object.entries(votes).forEach(([id,arr])=>{
-      if(arr.length>maxV){maxV=arr.length;winners=[parseInt(id)];}
-      else if(arr.length===maxV&&arr.length>0){winners.push(parseInt(id));}
-    });
-
-    if(maxV===0||winners.length===0){
-      bLog('⚖️ Không ai bị kết án hôm nay.','day');
-      await wait(1500);
-      return null;
-    }
-    if(winners.length===1){
-      const w=G.players.find(p=>p.id===winners[0]);
-      bLog(`⚖️ <b>${w.name}</b> bị đưa ra xét xử với ${maxV} phiếu.`,'vote');
-      await wait(1200);
-      return winners[0];
-    }
-    const names=winners.map(id=>G.players.find(p=>p.id===id).name).join(', ');
-    bLog(`⚖️ Hòa phiếu giữa <b>${names}</b>. Bỏ phiếu lại!`,'vote');
-    pool=winners;
-    await wait(1500);
-  }
-
-  bLog('⚖️ Cả làng không thể thống nhất. Không ai bị treo cổ.','day');
-  await wait(1500);
-  return null;
-}
-
-async function executePlayer(id){
-  const p=G.players.find(x=>x.id===id);
-  if(!p||!p.alive) return;
-
-  if(p.role==='fool'){
-    bLog(`🤡 <b>${p.name}</b> lật bài: <b>KẺ NGỐC</b>! Cả làng sững sờ.`,'death');
-    beep(880,.4,'sine',.06);
-    await wait(1500);
-    endGame('fool');
-    return;
-  }
-
-  p.alive=false;
-  bLog(`⚰️ <b>${p.name}</b> bị treo cổ. Vai trò: <b style="color:${ROLES[p.role].color}">${ROLES[p.role].name}</b>.`,'death');
-  beep(120,.9,'sawtooth',.07);
-  bPlayers();
-  await wait(1500);
-
-  if(p.role==='hunter'){
-    const cands=G.players.filter(x=>x.alive&&x.id!==p.id);
-    if(cands.length){
-      let t=null;
-      if(p.isBot){
-        cands.sort((a,b)=>(p.sus[b.id]||0)-(p.sus[a.id]||0));
-        t=cands[0].id;
-      } else {
-        t=await ask(p.id,'target',{
-          prompt:'🏹 <b>Ngươi là Thợ Săn.</b> Trước khi chết, bắn hạ một người:',
-          candidates:cands
-        });
-      }
-      if(t!=null){
-        const v=G.players.find(x=>x.id===t);
-        if(v&&v.alive){
-          v.alive=false;
-          bLog(`🏹 ${p.name} kịp buông một mũi tên. <b>${v.name}</b> gục xuống. Vai trò: ${ROLES[v.role].name}.`,'death');
-        }
-      }
-    }
-    bPlayers();
-    await wait(1200);
-  }
-
-  if(G.lovers.includes(p.id)){
-    const other=G.lovers.find(x=>x!==p.id);
-    const o=G.players.find(x=>x.id===other);
-    if(o&&o.alive){
-      o.alive=false;
-      bLog(`💔 <b>${o.name}</b> gục xuống vì đau đớn — trái tim họ ngừng đập cùng người tình.`,'death');
-      bPlayers();
-      await wait(1200);
-    }
-  }
-
-  bPlayers();
-}
-
-function checkWin(){
-  const alive=G.players.filter(p=>p.alive);
-  const wolves=alive.filter(isWolf);
-  const others=alive.filter(p=>!isWolf(p));
-  if(wolves.length===0) return 'village';
-  if(wolves.length>=others.length) return 'wolf';
-  if(alive.length<=1){
-    if(wolves.length>=1) return 'wolf';
-    return 'village';
-  }
-  return null;
-}
-
-function endGame(winner){
-  if(G.over) return;
-  G.over=true;
-  const roles=G.players.map(p=>({
-    id:p.id,name:p.name,avatar:p.avatar,role:p.role,alive:p.alive,isBot:p.isBot,uuid:p.uuid
-  }));
-  if(APP.role==='host'){
-    broadcast({t:'end',winner,roles});
-  }
-  renderEnd(winner,roles,APP.myRole,APP.myId);
-}
-
-function renderEnd(winner,roles,myRole,myId){
-  const me=roles.find(r=>r.id===myId);
-  const myRoleKey=myRole||(me?me.role:null);
-  const myAlive=me?me.alive:false;
-
-  const myIsWolf=myRoleKey&&(myRoleKey==='wolf'||myRoleKey==='whitewolf'||myRoleKey==='traitor');
-  const won=
-    (winner==='village'&&myRoleKey&&!myIsWolf)||
-    (winner==='wolf'&&myIsWolf)||
-    (winner==='fool'&&myRoleKey==='fool');
-
-  const titles={
-    village:{t:'🌅 PHE DÂN LÀNG CHIẾN THẮNG',c:'#5fbf7f',s:'Bầy Sói đã bị xóa sổ. Ngôi làng có thể ngủ yên.'},
-    wolf:{t:'🐺 BẦY SÓI CHIẾN THẮNG',c:'#d94b4b',s:'Những tiếng tru vang vọng khắp quảng trường. Ngôi làng thuộc về bóng tối.'},
-    fool:{t:'🤡 KẺ NGỐC CHIẾN THẮNG',c:'#f39c12',s:'Kẻ bị khinh thường lại cười sau cùng. Trò đùa cay đắng nhất.'}
-  };
-  const info=titles[winner]||titles.village;
-
-  el('endTitle').textContent=info.t;
-  el('endTitle').style.color=info.c;
-  el('endSub').innerHTML=info.s+'<br><br>'+
-    (won?'<b style="color:#5fbf7f">BẠN ĐÃ THẮNG.</b>':'<b style="color:#d94b4b">BẠN ĐÃ THUA.</b>')+
-    `<br><span style="font-size:12px;color:#5f5a50">Vai trò của bạn: ${myRoleKey?ROLES[myRoleKey].name:'?'} · Sống sót: ${myAlive?'Có':'Không'}</span>`;
-
-  const grid=el('revGrid'); grid.innerHTML='';
-  roles.forEach(p=>{
-    const r=ROLES[p.role];
-    const wolfFlag=p.role==='wolf'||p.role==='whitewolf'||p.role==='traitor';
-    const isMe=p.id===myId;
-    const d=document.createElement('div');
-    d.className='revCard'+(wolfFlag?' wolf':'')+(p.alive?'':' dead');
-    d.innerHTML=`<div class="rname">${p.avatar} ${p.name}${isMe?' ★':''}</div>
-      <div class="rrole" style="color:${r?r.color:'#888'}">${r?r.icon+' '+r.name:p.role}</div>
-      <div style="font-size:10px;color:#5f5a50;margin-top:3px">${p.alive?'còn sống':'đã chết'}</div>`;
-    
-    if(!isMe && !p.isBot && p.uuid){
-       const btn = document.createElement('button');
-       btn.textContent = 'Kết bạn';
-       btn.style = 'margin-top:6px;background:transparent;border:1px solid var(--gold-dim);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;width:100%;';
-       btn.onclick = () => sendFriendRequest(p.uuid, p.name);
-       d.appendChild(btn);
-    }
-    grid.appendChild(d);
-  });
-
-  beep(winner==='wolf'?180:660,.6,'sine',.06);
-  showScreen('end');
-}
-
-el('btnAgain').onclick=()=>{
-  if(APP.conn) APP.conn.close();
-  if(APP.peer) APP.peer.destroy();
-  APP.peer=null;APP.conn=null;APP.peerConns={};
-  APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];APP.myId=null;APP.myRole=null;
-  APP.onRoleOk=null;APP.readyCount=0;APP.peerReady=false;
-  G.over=false;
-  el('actions').innerHTML='';
-  clearLog();
-  showScreen('menu');
-};
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function clearLog(){el('log').innerHTML='';}
-
-/* =========================================================
+/* =========================================
    AUTO JOIN VIA URL
-========================================================= */
-(function(){
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get('room');
-  if(roomCode) {
-    el('inCode').value = roomCode;
-    // Đợi người dùng đăng nhập xong mới hiển thị màn hình Online
-    const checkUser = setInterval(()=>{
-      if(APP.user){
-        clearInterval(checkUser);
-        showScreen('online');
+========================================= */
+(function autoJoin() {
+  const params = new URLSearchParams(window.location.search);
+  const room = params.get('room');
+  if (room) {
+    el('inCode').value = room;
+    const check = setInterval(() => {
+      if (APP.user) {
+        clearInterval(check);
+        showScreen('s-online');
       }
     }, 500);
   }
