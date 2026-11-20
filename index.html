@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Ma Sói: Lời Nói Dối Cuối Cùng</title>
+<!-- Thư viện PeerJS để chơi Online thực sự P2P -->
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root{
   --bg:#08080d;--panel:#12121b;--line:#2a2a38;
@@ -229,7 +231,7 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
   </button>
   <button id="btnOnline" class="modeBtn">
     <div class="modeTitle">🌐 Chơi Online với bạn bè</div>
-    <div class="modeDesc">Tạo phòng, chia sẻ mã, chơi cùng nhau. Bot tự động lấp chỗ trống.</div>
+    <div class="modeDesc">Tạo phòng, chia sẻ mã, chơi cùng nhau qua Internet. Tự động thêm Bot.</div>
   </button>
   <button class="btnBack" id="btnLogout">← Đăng xuất</button>
 </div></div>
@@ -255,9 +257,7 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
     style="text-transform:uppercase;text-align:center;letter-spacing:.3em;font-size:20px"/>
   <button id="btnJoin" class="btnMain">Tham gia</button>
   <button class="btnBack" data-back="menu">← Quay lại</button>
-  <div class="hint">ⓘ Để chơi cùng bạn bè: mở file qua web server
-    (vd: <code style="color:#c9a227">python -m http.server</code>),
-    chia sẻ URL, mỗi người mở tab riêng, nhập mã phòng.</div>
+  <div class="hint">ⓘ Để chơi cùng bạn bè: chủ phòng tạo mã, gửi mã cho bạn. Bạn bè nhập mã để vào. (Có thể chơi khác mạng, khác thiết bị).</div>
 </div></div>
 
 <!-- ====== LOBBY ====== -->
@@ -396,7 +396,8 @@ const COMP={
    STATE
 ========================================================= */
 const APP={
-  user:null, role:null, roomCode:null, channel:null,
+  user:null, role:null, roomCode:null,
+  peer:null, conn:null, connections:[], // PeerJS
   myId:null, uuid:'u'+Math.random().toString(36).slice(2)+Date.now(),
   myRole:null, lobbyPlayers:[], maxPlayers:8,
   onRoleOk:null, readyCount:0, totalHumans:0
@@ -422,6 +423,21 @@ function showScreen(n){
 }
 
 /* =========================================================
+   NETWORK (PeerJS)
+========================================================= */
+function broadcast(msg){
+  if(!APP.connections) return;
+  APP.connections.forEach(c=>{
+    if(c.open) c.send(msg);
+  });
+}
+function sendTo(uuid,msg){
+  if(!APP.connections) return;
+  const c=APP.connections.find(x=>x.peer===uuid);
+  if(c&&c.open) c.send(msg);
+}
+
+/* =========================================================
    LOG (with broadcast)
 ========================================================= */
 function log(html,cls=''){
@@ -434,8 +450,8 @@ function log(html,cls=''){
 }
 function bLog(html,cls=''){
   log(html,cls);
-  if(APP.channel && (APP.role==='host'||APP.role==='solo')){
-    APP.channel.postMessage({t:'log',html,cls});
+  if(APP.role==='host'){
+    broadcast({t:'log',html,cls});
   }
 }
 
@@ -457,8 +473,8 @@ function renderPlayers(){
 }
 function bPlayers(){
   renderPlayers();
-  if(APP.channel && (APP.role==='host'||APP.role==='solo')){
-    APP.channel.postMessage({t:'state',players:publicPlayers(),day:G.day,phase:G.phase});
+  if(APP.role==='host'){
+    broadcast({t:'state',players:publicPlayers(),day:G.day,phase:G.phase});
   }
 }
 function publicPlayers(){
@@ -521,10 +537,6 @@ function showWaiting(text){
 ========================================================= */
 let promptSeq=0;
 const pendingPrompts={};
-
-function sendTo(uuid,msg){
-  if(APP.channel) APP.channel.postMessage({...msg,to:uuid});
-}
 
 async function ask(pid,kind,payload){
   const p=G.players.find(x=>x.id===pid);
@@ -632,7 +644,7 @@ el('btnStartBot').onclick=async()=>{
 };
 
 /* =========================================================
-   ONLINE
+   ONLINE (PeerJS)
 ========================================================= */
 function genCode(){
   const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -646,44 +658,89 @@ el('btnCreate').onclick=()=>{
   APP.myId=0;
   APP.maxPlayers=8;
   APP.lobbyPlayers=[{id:0,uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar,isHost:true}];
-  APP.channel=new BroadcastChannel('masoi_'+APP.roomCode);
-  APP.channel.onmessage=hostMsg;
+  
   el('codeDisp').textContent=APP.roomCode;
   el('hostCtrl').style.display='block';
   el('clientHint').style.display='none';
   buildLobbyCounts();
   renderLobby();
-  broadcastLobby();
   showScreen('lobby');
-  beep(680,.12,'sine',.04);
+  
+  // Khởi tạo PeerJS Host
+  if(APP.peer) APP.peer.destroy();
+  APP.peer = new Peer('masoi-'+APP.roomCode, {debug:1});
+  APP.connections = [];
+  
+  APP.peer.on('open', (id) => {
+    beep(680,.12,'sine',.04);
+    broadcast({t:'lobby',players:APP.lobbyPlayers,maxPlayers:APP.maxPlayers});
+  });
+  
+  APP.peer.on('connection', (conn) => {
+    APP.connections.push(conn);
+    
+    conn.on('data', (data) => {
+      hostMsg({data, conn});
+    });
+    
+    conn.on('close', () => {
+      APP.connections = APP.connections.filter(c=>c!==conn);
+      APP.lobbyPlayers = APP.lobbyPlayers.filter(p=>p.conn !== conn);
+      // Clean up players if in game
+      broadcastLobby();
+      renderLobby();
+    });
+  });
+  
+  APP.peer.on('error', (err) => {
+    alert('Lỗi kết nối mạng: '+err.type);
+  });
 };
 
 el('btnJoin').onclick=()=>{
   const code=(el('inCode').value||'').trim().toUpperCase();
   if(code.length<4){alert('Mã phòng không hợp lệ');return;}
+  
   APP.role='client';
   APP.roomCode=code;
-  APP.channel=new BroadcastChannel('masoi_'+code);
-  APP.channel.onmessage=clientMsg;
-  APP.channel.postMessage({t:'join',uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar});
+  
   el('codeDisp').textContent=code;
   el('hostCtrl').style.display='none';
   el('clientHint').style.display='block';
   el('lobbyList').innerHTML='<div class="waiting">Đang kết nối tới phòng</div>';
   showScreen('lobby');
-  setTimeout(()=>{
-    if(!APP.lobbyPlayers.length){
-      el('lobbyList').innerHTML='<div class="muted" style="padding:20px">Không tìm thấy phòng. Kiểm tra mã hoặc chủ phòng chưa mở.</div>';
-    }
-  },1500);
+  
+  if(APP.peer) APP.peer.destroy();
+  APP.peer = new Peer({debug:1});
+  
+  APP.peer.on('open', () => {
+    APP.conn = APP.peer.connect('masoi-'+APP.roomCode);
+    
+    APP.conn.on('open', () => {
+      beep(680,.12,'sine',.04);
+      APP.conn.send({t:'join',uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar});
+    });
+    
+    APP.conn.on('data', (data) => {
+      clientMsg({data});
+    });
+    
+    APP.conn.on('close', () => {
+      alert('Mất kết nối với chủ phòng!');
+      showScreen('menu');
+    });
+  });
+  
+  APP.peer.on('error', (err) => {
+    el('lobbyList').innerHTML='<div class="muted" style="padding:20px">Không tìm thấy phòng. Kiểm tra mã hoặc chủ phòng chưa mở.</div>';
+  });
 };
 
 el('btnLeave').onclick=()=>{
-  if(APP.channel){
-    APP.channel.postMessage({t:'leave',uuid:APP.uuid,id:APP.myId});
-    APP.channel.close();
-  }
-  APP.channel=null;APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];
+  if(APP.conn) APP.conn.close();
+  if(APP.peer) APP.peer.destroy();
+  APP.peer=null;APP.conn=null;APP.connections=[];
+  APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];
   showScreen('menu');
 };
 
@@ -725,17 +782,18 @@ function renderLobby(){
 }
 
 function broadcastLobby(){
-  if(!APP.channel) return;
-  APP.channel.postMessage({t:'lobby',players:APP.lobbyPlayers,maxPlayers:APP.maxPlayers});
+  broadcast({t:'lobby',players:APP.lobbyPlayers,maxPlayers:APP.maxPlayers});
 }
 
-function hostMsg(e){
-  const m=e.data;
+function hostMsg({data:m, conn}){
   if(m.t==='join'){
-    if(APP.lobbyPlayers.length>=APP.maxPlayers){sendTo(m.uuid,{t:'full'});return;}
+    if(APP.lobbyPlayers.length>=APP.maxPlayers){
+      conn.send({t:'full'});
+      return;
+    }
     if(APP.lobbyPlayers.find(p=>p.uuid===m.uuid)) return;
     const id=APP.lobbyPlayers.length;
-    APP.lobbyPlayers.push({id,uuid:m.uuid,name:m.name,avatar:m.avatar,isHost:false});
+    APP.lobbyPlayers.push({id,uuid:m.uuid,name:m.name,avatar:m.avatar,isHost:false,conn});
     broadcastLobby(); renderLobby();
   } else if(m.t==='leave'){
     APP.lobbyPlayers=APP.lobbyPlayers.filter(p=>p.uuid!==m.uuid);
@@ -748,8 +806,7 @@ function hostMsg(e){
   }
 }
 
-function clientMsg(e){
-  const m=e.data;
+function clientMsg({data:m}){
   if(m.to && m.to!==APP.uuid) return;
   if(m.t==='lobby'){
     APP.lobbyPlayers=m.players;
@@ -790,7 +847,7 @@ async function handleClientStart(){
   showRoleReveal(APP.myRole);
   APP.onRoleOk=()=>{
     el('roleOv').classList.add('hide');
-    APP.channel.postMessage({t:'ready',uuid:APP.uuid});
+    if(APP.conn) APP.conn.send({t:'ready',uuid:APP.uuid});
     showWaiting('Đang chờ mọi người sẵn sàng');
   };
 }
@@ -799,12 +856,12 @@ function handleClientPrompt(m){
   if(m.kind==='choice'){
     if(m.payload.logMsg) log(m.payload.logMsg,'night');
     showChoices(m.payload.options).then(c=>{
-      APP.channel.postMessage({t:'reply',id:m.id,value:c});
+      if(APP.conn) APP.conn.send({t:'reply',id:m.id,value:c});
       showWaiting('Đang chờ');
     });
   } else {
     showTargets(m.payload.prompt,m.payload.candidates).then(t=>{
-      APP.channel.postMessage({t:'reply',id:m.id,value:t});
+      if(APP.conn) APP.conn.send({t:'reply',id:m.id,value:t});
       showWaiting('Đang chờ');
     });
   }
@@ -833,8 +890,8 @@ el('btnStartOnline').onclick=async()=>{
   APP.totalHumans=humans.length;
 
   // Broadcast initial state
-  APP.channel.postMessage({t:'state',players:publicPlayers(),day:G.day,phase:'night'});
-  APP.channel.postMessage({t:'log',html:`🌙 <b>Đêm 1</b> — Sương mù tràn qua những mái nhà.`,cls:'night'});
+  broadcast({t:'state',players:publicPlayers(),day:G.day,phase:'night'});
+  broadcast({t:'log',html:`🌙 <b>Đêm 1</b> — Sương mù tràn qua những mái nhà.`,cls:'night'});
 
   showScreen('dealing');
   playDealingAnimation();
@@ -852,7 +909,6 @@ el('btnStartOnline').onclick=async()=>{
   APP.onRoleOk=async()=>{
     el('roleOv').classList.add('hide');
     showWaiting('Đang chờ mọi người sẵn sàng...');
-    // Wait for all clients ready (with timeout)
     const t0=Date.now();
     while(APP.readyCount<APP.totalHumans && Date.now()-t0<15000){
       await wait(200);
@@ -903,7 +959,6 @@ function buildPlayers(humans,bots){
 function assignRoles(ps){
   const roles=shuffle([...(COMP[ps.length]||COMP[8])]);
   ps.forEach((p,i)=>{p.role=roles[i];});
-  // Init sus/trust
   ps.forEach(p=>{
     ps.forEach(o=>{
       if(o.id===p.id) return;
@@ -911,7 +966,6 @@ function assignRoles(ps){
       p.trust[o.id]=rnd(15,45);
     });
   });
-  // Wolves know each other
   const wolves=ps.filter(isWolf);
   wolves.forEach(w=>wolves.forEach(o=>{
     if(o.id!==w.id){w.trust[o.id]=95;w.sus[o.id]=0;}
@@ -1229,10 +1283,8 @@ async function dayPhase(){
   beep(520,.3,'sine',.04);
   await wait(700);
 
-  // Reset defense flag
   G.players.forEach(p=>{p.defendedToday=false;});
 
-  // Announce deaths
   const dead=G.players.filter(p=>!p.alive);
   if(dead.length){
     const last=dead[dead.length-1];
@@ -1241,14 +1293,11 @@ async function dayPhase(){
     bLog('Không ai chết đêm qua. Sự im lặng bao trùm quảng trường.','eff');
   }
 
-  // Random event
   if(Math.random()<0.45){ await randomEvent(); await wait(500); }
 
-  // Defense phase
   await defenseRound();
   await wait(300);
 
-  // Vote
   const eliminated=await votePhase();
   if(eliminated!=null) await executePlayer(eliminated);
 }
@@ -1307,9 +1356,6 @@ async function randomEvent(){
   pick(evts)();
 }
 
-/* =========================================================
-   DEFENSE ROUND (mỗi người 1 lần)
-========================================================= */
 async function defenseRound(){
   bLog('🗣️ <b>Lượt biện minh.</b> Mỗi người có một lần lên tiếng.','day');
   await wait(500);
@@ -1332,7 +1378,6 @@ async function defenseRound(){
 async function humanDefend(actor){
   const text=await showDefenseModal(actor);
   if(text===null){
-    // passed
     bLog(`<b>${actor.name}</b>: "..."`,'player');
     G.players.filter(p=>p.alive&&p.id!==actor.id).forEach(p=>{
       p.sus[actor.id]=clamp((p.sus[actor.id]||0)+rnd(1,6),0,100);
@@ -1373,7 +1418,6 @@ function applyDefenseEffects(actor,text){
   G.players.filter(p=>p.alive&&p.id!==actor.id).forEach(p=>{
     if(defend>0) p.sus[actor.id]=clamp((p.sus[actor.id]||0)-defend*rnd(2,5),0,100);
     if(attack>0){
-      // Đẩy nghi ngờ sang người khác (chọn ngẫu nhiên người đáng ngờ nhất của p)
       const others=G.players.filter(o=>o.alive&&o.id!==p.id&&o.id!==actor.id);
       if(others.length){
         const target=others.sort((a,b)=>(p.sus[b.id]||0)-(p.sus[a.id]||0))[0];
@@ -1414,9 +1458,6 @@ function showDefenseModal(actor){
   });
 }
 
-/* =========================================================
-   VOTE (with tie-break rounds)
-========================================================= */
 function npcVoteChoice(npc,candidates){
   if(!candidates.length) return null;
   let best=null,bestScore=-999;
@@ -1466,7 +1507,6 @@ async function votePhase(){
       if(choice!=null&&votes[choice]) votes[choice].push(voter.id);
     }
 
-    // Log votes
     voters.forEach(v=>{
       const target=Object.keys(votes).find(k=>votes[k].includes(v.id));
       if(target){
@@ -1493,7 +1533,6 @@ async function votePhase(){
       await wait(700);
       return winners[0];
     }
-    // TIE → continue voting with only tied candidates
     const names=winners.map(id=>G.players.find(p=>p.id===id).name).join(', ');
     bLog(`⚖️ Hòa phiếu giữa <b>${names}</b>. Bỏ phiếu lại!`,'vote');
     pool=winners;
@@ -1505,14 +1544,10 @@ async function votePhase(){
   return null;
 }
 
-/* =========================================================
-   EXECUTE
-========================================================= */
 async function executePlayer(id){
   const p=G.players.find(x=>x.id===id);
   if(!p||!p.alive) return;
 
-  // FOOL
   if(p.role==='fool'){
     bLog(`🤡 <b>${p.name}</b> lật bài: <b>KẺ NGỐC</b>! Cả làng sững sờ.`,'death');
     beep(880,.4,'sine',.06);
@@ -1527,7 +1562,6 @@ async function executePlayer(id){
   bPlayers();
   await wait(1100);
 
-  // HUNTER
   if(p.role==='hunter'){
     const cands=G.players.filter(x=>x.alive&&x.id!==p.id);
     if(cands.length){
@@ -1553,7 +1587,6 @@ async function executePlayer(id){
     await wait(800);
   }
 
-  // LOVERS
   if(G.lovers.includes(p.id)){
     const other=G.lovers.find(x=>x!==p.id);
     const o=G.players.find(x=>x.id===other);
@@ -1568,9 +1601,6 @@ async function executePlayer(id){
   bPlayers();
 }
 
-/* =========================================================
-   WIN
-========================================================= */
 function checkWin(){
   const alive=G.players.filter(p=>p.alive);
   const wolves=alive.filter(isWolf);
@@ -1590,8 +1620,8 @@ function endGame(winner){
   const roles=G.players.map(p=>({
     id:p.id,name:p.name,avatar:p.avatar,role:p.role,alive:p.alive
   }));
-  if(APP.channel && APP.role==='host'){
-    APP.channel.postMessage({t:'end',winner,roles});
+  if(APP.role==='host'){
+    broadcast({t:'end',winner,roles});
   }
   renderEnd(winner,roles,APP.myRole,APP.myId);
 }
@@ -1638,7 +1668,9 @@ function renderEnd(winner,roles,myRole,myId){
 }
 
 el('btnAgain').onclick=()=>{
-  if(APP.channel){APP.channel.close();APP.channel=null;}
+  if(APP.conn) APP.conn.close();
+  if(APP.peer) APP.peer.destroy();
+  APP.peer=null;APP.conn=null;APP.connections=[];
   APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];APP.myId=null;APP.myRole=null;
   APP.onRoleOk=null;APP.readyCount=0;
   G.over=false;
@@ -1647,9 +1679,6 @@ el('btnAgain').onclick=()=>{
   showScreen('menu');
 };
 
-/* =========================================================
-   UTIL
-========================================================= */
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
