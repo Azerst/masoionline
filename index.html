@@ -238,7 +238,7 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
   </button>
   <button id="btnFriends" class="modeBtn">
     <div class="modeTitle">👥 Bạn bè</div>
-    <div class="modeDesc">Quản lý danh sách bạn bè đã chơi cùng.</div>
+    <div class="modeDesc">Quản lý danh sách bạn bè và lời mời kết bạn.</div>
   </button>
   <button class="btnBack" id="btnLogout">← Đăng xuất</button>
 </div></div>
@@ -289,6 +289,7 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
     <label class="lbl" style="text-align:center">Tổng số người (bot sẽ lấp đầy)</label>
     <div class="countRow" id="lobbyCountRow"></div>
     <button id="btnStartOnline" class="btnMain" disabled>Bắt đầu ván</button>
+    <button id="btnCopyInvite" class="btnBack" style="margin-top:8px; font-size:14px; color:var(--gold)">📋 Copy Link Mời</button>
   </div>
   <div id="clientHint" class="muted" style="display:none">Đang chờ chủ phòng bắt đầu...</div>
   <button class="btnBack" id="btnLeave">← Rời phòng</button>
@@ -350,6 +351,18 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
   </div>
 </div>
 
+<!-- ====== FRIEND REQUEST OVERLAY ====== -->
+<div class="overlay hide" id="friendReqOv">
+  <div class="defBox">
+    <div class="defTitle">Lời mời kết bạn</div>
+    <div class="defSub" id="friendReqSub">Ai đó muốn kết bạn với bạn.</div>
+    <div class="defActions">
+      <button id="btnFReqAccept" class="btnMain">Đồng ý</button>
+      <button id="btnFReqReject" class="btnBack" style="margin:0">Từ chối</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =========================================================
    HELPERS
@@ -404,12 +417,13 @@ const ROLES={
     desc:'Nếu bị cả làng bỏ phiếu treo cổ, ngươi lật bài, sống sót — và chiến thắng ngay lập tức.'}
 };
 
+/* Giới hạn Sói (2-3) */
 const COMP={
   8:['wolf','wolf','seer','guard','witch','villager','villager','villager'],
   9:['wolf','wolf','seer','guard','witch','hunter','villager','villager','villager'],
   10:['wolf','wolf','wolf','seer','guard','witch','hunter','villager','villager','villager'],
   11:['wolf','wolf','wolf','seer','guard','witch','hunter','cupid','villager','villager','villager'],
-  12:['wolf','wolf','whitewolf','seer','guard','witch','hunter','cupid','fool','traitor','villager','villager']
+  12:['wolf','wolf','whitewolf','seer','guard','witch','hunter','cupid','fool','villager','villager','villager']
 };
 
 /* =========================================================
@@ -437,6 +451,8 @@ const seerView=p=>p.role==='traitor'?'village':(isWolf(p)?'wolf':'village');
 /* =========================================================
    FRIENDS SYSTEM
 ========================================================= */
+let pendingFriendReq = null;
+
 function getFriends(){
   try{ return JSON.parse(localStorage.getItem('masoi_friends')||'[]'); }
   catch(e){ return []; }
@@ -444,19 +460,24 @@ function getFriends(){
 function saveFriends(list){
   localStorage.setItem('masoi_friends', JSON.stringify(list));
 }
-function addFriend(name, avatar){
+function addFriend(name, avatar, uuid){
   const list = getFriends();
-  if(list.find(f=>f.name===name)){ alert('Đã có trong danh sách bạn bè!'); return; }
-  list.push({name, avatar});
+  if(list.find(f=>f.name===name)){
+    // Cập nhật uuid nếu đã có
+    const idx = list.findIndex(f=>f.name===name);
+    if(uuid) list[idx].uuid = uuid;
+    saveFriends(list);
+    return;
+  }
+  list.push({name, avatar, uuid});
   saveFriends(list);
-  alert('Đã kết bạn với '+name);
 }
 function renderFriends(){
   const list = getFriends();
   const elList = el('friendList');
   elList.innerHTML = '';
   if(!list.length){
-    elList.innerHTML = '<div class="muted">Chưa có bạn bè nào.</div>';
+    elList.innerHTML = '<div class="muted">Chưa có bạn bè nào. Hãy vào ván đấu và gửi lời mời!</div>';
     return;
   }
   list.forEach(f=>{
@@ -471,6 +492,48 @@ window.removeFriend = (name) => {
   let list = getFriends().filter(f=>f.name!==name);
   saveFriends(list);
   renderFriends();
+};
+
+function sendFriendRequest(targetUuid, targetName){
+  const packet = {t:'friend_req', from: {name: APP.user.name, avatar: APP.user.avatar, uuid: APP.uuid}};
+  if(APP.role === 'solo') return;
+  
+  if(APP.role === 'host'){
+    sendTo(targetUuid, packet);
+  } else if(APP.role === 'client'){
+    APP.conn.send({t:'relay', to: targetUuid, msg: packet});
+  }
+  alert('Đã gửi lời mời kết bạn đến ' + targetName);
+}
+
+function sendFriendAccept(targetUuid){
+  const packet = {t:'friend_acc', from: {name: APP.user.name, avatar: APP.user.avatar, uuid: APP.uuid}};
+  if(APP.role === 'host'){
+    sendTo(targetUuid, packet);
+  } else if(APP.role === 'client'){
+    APP.conn.send({t:'relay', to: targetUuid, msg: packet});
+  }
+}
+
+function showFriendRequest(from){
+  pendingFriendReq = from;
+  el('friendReqSub').textContent = `${from.name} muốn kết bạn với bạn.`;
+  el('friendReqOv').classList.remove('hide');
+  beep(600, 0.2, 'sine', 0.05);
+}
+
+el('btnFReqAccept').onclick = () => {
+  if(pendingFriendReq){
+    addFriend(pendingFriendReq.name, pendingFriendReq.avatar, pendingFriendReq.uuid);
+    sendFriendAccept(pendingFriendReq.uuid);
+    alert('Đã chấp nhận kết bạn với ' + pendingFriendReq.name);
+  }
+  el('friendReqOv').classList.add('hide');
+  pendingFriendReq = null;
+};
+el('btnFReqReject').onclick = () => {
+  el('friendReqOv').classList.add('hide');
+  pendingFriendReq = null;
 };
 
 /* =========================================================
@@ -538,8 +601,18 @@ function renderPlayers(){
     const isMe=APP.myId!=null&&p.id===APP.myId;
     d.className='pcard'+(p.alive?'':' dead')+(isMe?' me':'');
     d.innerHTML=`<div class="pav">${p.avatar}</div>
-      <div><div class="pname">${p.name}${isMe?' ★':''}</div>
+      <div style="flex:1"><div class="pname">${p.name}${isMe?' ★':''}</div>
       <div class="pstat">${p.alive?'còn sống':'đã chết'}</div></div>`;
+    
+    // Nút Kết Bạn
+    if(!p.isBot && !isMe && p.uuid && (APP.role==='host'||APP.role==='client')) {
+       const btn = document.createElement('button');
+       btn.textContent = '👋';
+       btn.title = 'Kết bạn';
+       btn.style = 'background:transparent;border:none;color:var(--gold);cursor:pointer;font-size:16px';
+       btn.onclick = () => sendFriendRequest(p.uuid, p.name);
+       d.appendChild(btn);
+    }
     list.appendChild(d);
   });
 }
@@ -684,7 +757,7 @@ el('btnFriends').onclick=()=>{
 };
 el('btnAddFriend').onclick=()=>{
   const name = el('inFriendName').value.trim();
-  if(name){ addFriend(name, '🧑'); el('inFriendName').value=''; }
+  if(name){ addFriend(name, '🧑', null); el('inFriendName').value=''; renderFriends(); alert('Đã thêm bạn (offline)'); }
 };
 
 /* =========================================================
@@ -867,6 +940,15 @@ el('btnLeave').onclick=()=>{
   showScreen('menu');
 };
 
+el('btnCopyInvite').onclick = () => {
+  const url = window.location.origin + window.location.pathname + '?room=' + APP.roomCode;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('Đã copy link mời: ' + url + '\nGửi link này cho bạn bè để họ tham gia!');
+  }).catch(() => {
+    prompt('Copy link này:', url);
+  });
+};
+
 function buildLobbyCounts(){
   const row=el('lobbyCountRow'); row.innerHTML='';
   for(let n=4;n<=12;n++){
@@ -933,6 +1015,8 @@ function hostMsg({data:m, conn}){
     if(r){ delete pendingPrompts[m.id]; r(m.value); }
   } else if(m.t==='ready'){
     APP.readyCount=(APP.readyCount||0)+1;
+  } else if(m.t==='relay'){
+    sendTo(m.to, m.msg);
   }
 }
 
@@ -958,7 +1042,7 @@ function clientMsg({data:m}){
     renderPlayers();
     setPhase(m.phase);
     
-    // FIX LỖI: Người chết hiển thị thông báo, xoá các nút cũ
+    // Nếu người chơi đã chết, hiển thị thông báo
     const me = G.players.find(p=>p.id===APP.myId);
     if(me && !me.alive && me.role !== 'hunter'){
         el('actions').innerHTML='<div class="waiting">Bạn đã chết. Hãy theo dõi ván đấu.</div>';
@@ -969,6 +1053,11 @@ function clientMsg({data:m}){
     handleClientPrompt(m);
   } else if(m.t==='end'){
     renderEnd(m.winner,m.roles,APP.myRole,APP.myId);
+  } else if(m.t==='friend_req'){
+    showFriendRequest(m.from);
+  } else if(m.t==='friend_acc'){
+    addFriend(m.from.name, m.from.avatar, m.from.uuid);
+    alert(m.from.name + ' đã chấp nhận lời mời kết bạn!');
   }
 }
 
@@ -1183,7 +1272,7 @@ async function nightPhase(){
   bLog('─────────────────────────','sep');
   bLog(`🌙 <b>Đêm ${G.day}</b> — Sương mù tràn qua những mái nhà. Những ngọn nến lần lượt tắt.`,'night');
   beep(180,.6,'sine',.05);
-  await wait(700);
+  await wait(1500); // Tăng thời gian chờ
 
   const alive=()=>G.players.filter(p=>p.alive);
 
@@ -1363,7 +1452,7 @@ async function nightPhase(){
     }
   }
 
-  await wait(500);
+  await wait(1000);
   await resolveNight();
 }
 
@@ -1399,18 +1488,18 @@ async function resolveNight(){
 
   if(deaths.size===0){
     bLog('🌅 Bình minh lên. Không ai chết trong đêm nay.','day');
-    await wait(900);
+    await wait(2000); // Tăng thời gian chờ
   } else {
     for(const id of deaths){
       const p=G.players.find(x=>x.id===id);
       if(p&&p.alive){
         p.alive=false;
         beep(140,.6,'sawtooth',.06);
-        await wait(250);
+        await wait(800); // Tăng thời gian chờ
       }
     }
     bPlayers();
-    await wait(600);
+    await wait(2000); // Tăng thời gian chờ
   }
 }
 
@@ -1422,7 +1511,7 @@ async function dayPhase(){
   bLog('─────────────────────────','sep');
   bLog(`☀️ <b>Ngày ${G.day}</b> — Cả làng tập trung tại quảng trường.`,'day');
   beep(520,.3,'sine',.04);
-  await wait(700);
+  await wait(1500); // Tăng thời gian chờ
 
   G.players.forEach(p=>{p.defendedToday=false;});
 
@@ -1434,10 +1523,10 @@ async function dayPhase(){
     bLog('Không ai chết đêm qua. Sự im lặng bao trùm quảng trường.','eff');
   }
 
-  if(Math.random()<0.45){ await randomEvent(); await wait(500); }
+  if(Math.random()<0.45){ await randomEvent(); await wait(800); }
 
   await defenseRound();
-  await wait(300);
+  await wait(500);
 
   const eliminated=await votePhase();
   if(eliminated!=null) await executePlayer(eliminated);
@@ -1499,7 +1588,7 @@ async function randomEvent(){
 
 async function defenseRound(){
   bLog('🗣️ <b>Lượt biện minh.</b> Mỗi người có một lần lên tiếng.','day');
-  await wait(500);
+  await wait(1500); // Tăng thời gian chờ
 
   const order=shuffle(G.players.filter(p=>p.alive));
 
@@ -1508,10 +1597,10 @@ async function defenseRound(){
 
     if(actor.isBot){
       botDefend(actor);
-      await wait(900);
+      await wait(2000); // Tăng thời gian chờ giữa các bot
     } else {
       await humanDefend(actor);
-      await wait(500);
+      await wait(1500);
     }
   }
 }
@@ -1618,7 +1707,7 @@ function npcVoteChoice(npc,candidates){
 async function votePhase(){
   bLog('🗳️ <b>Cả làng bỏ phiếu.</b> Ai sẽ bị treo cổ hôm nay?','vote');
   beep(400,.15,'square',.04);
-  await wait(500);
+  await wait(1500); // Tăng thời gian chờ
 
   let pool=G.players.filter(p=>p.alive).map(p=>p.id);
   let round=0;
@@ -1656,7 +1745,7 @@ async function votePhase(){
         if(t) bLog(`　${v.avatar} ${v.name} → <b>${t.name}</b>`,'eff');
       }
     });
-    await wait(400);
+    await wait(1500); // Tăng thời gian chờ
 
     let maxV=0,winners=[];
     Object.entries(votes).forEach(([id,arr])=>{
@@ -1666,23 +1755,23 @@ async function votePhase(){
 
     if(maxV===0||winners.length===0){
       bLog('⚖️ Không ai bị kết án hôm nay.','day');
-      await wait(800);
+      await wait(1500);
       return null;
     }
     if(winners.length===1){
       const w=G.players.find(p=>p.id===winners[0]);
       bLog(`⚖️ <b>${w.name}</b> bị đưa ra xét xử với ${maxV} phiếu.`,'vote');
-      await wait(700);
+      await wait(1200);
       return winners[0];
     }
     const names=winners.map(id=>G.players.find(p=>p.id===id).name).join(', ');
     bLog(`⚖️ Hòa phiếu giữa <b>${names}</b>. Bỏ phiếu lại!`,'vote');
     pool=winners;
-    await wait(700);
+    await wait(1500);
   }
 
   bLog('⚖️ Cả làng không thể thống nhất. Không ai bị treo cổ.','day');
-  await wait(800);
+  await wait(1500);
   return null;
 }
 
@@ -1693,7 +1782,7 @@ async function executePlayer(id){
   if(p.role==='fool'){
     bLog(`🤡 <b>${p.name}</b> lật bài: <b>KẺ NGỐC</b>! Cả làng sững sờ.`,'death');
     beep(880,.4,'sine',.06);
-    await wait(900);
+    await wait(1500);
     endGame('fool');
     return;
   }
@@ -1702,7 +1791,7 @@ async function executePlayer(id){
   bLog(`⚰️ <b>${p.name}</b> bị treo cổ. Vai trò: <b style="color:${ROLES[p.role].color}">${ROLES[p.role].name}</b>.`,'death');
   beep(120,.9,'sawtooth',.07);
   bPlayers();
-  await wait(1100);
+  await wait(1500);
 
   if(p.role==='hunter'){
     const cands=G.players.filter(x=>x.alive&&x.id!==p.id);
@@ -1726,7 +1815,7 @@ async function executePlayer(id){
       }
     }
     bPlayers();
-    await wait(800);
+    await wait(1200);
   }
 
   if(G.lovers.includes(p.id)){
@@ -1736,7 +1825,7 @@ async function executePlayer(id){
       o.alive=false;
       bLog(`💔 <b>${o.name}</b> gục xuống vì đau đớn — trái tim họ ngừng đập cùng người tình.`,'death');
       bPlayers();
-      await wait(800);
+      await wait(1200);
     }
   }
 
@@ -1760,7 +1849,7 @@ function endGame(winner){
   if(G.over) return;
   G.over=true;
   const roles=G.players.map(p=>({
-    id:p.id,name:p.name,avatar:p.avatar,role:p.role,alive:p.alive,isBot:p.isBot
+    id:p.id,name:p.name,avatar:p.avatar,role:p.role,alive:p.alive,isBot:p.isBot,uuid:p.uuid
   }));
   if(APP.role==='host'){
     broadcast({t:'end',winner,roles});
@@ -1803,11 +1892,11 @@ function renderEnd(winner,roles,myRole,myId){
       <div class="rrole" style="color:${r?r.color:'#888'}">${r?r.icon+' '+r.name:p.role}</div>
       <div style="font-size:10px;color:#5f5a50;margin-top:3px">${p.alive?'còn sống':'đã chết'}</div>`;
     
-    if(!isMe && !p.isBot){
+    if(!isMe && !p.isBot && p.uuid){
        const btn = document.createElement('button');
        btn.textContent = 'Kết bạn';
        btn.style = 'margin-top:6px;background:transparent;border:1px solid var(--gold-dim);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;width:100%;';
-       btn.onclick = () => addFriend(p.name, p.avatar);
+       btn.onclick = () => sendFriendRequest(p.uuid, p.name);
        d.appendChild(btn);
     }
     grid.appendChild(d);
@@ -1833,6 +1922,24 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function clearLog(){el('log').innerHTML='';}
+
+/* =========================================================
+   AUTO JOIN VIA URL
+========================================================= */
+(function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomCode = urlParams.get('room');
+  if(roomCode) {
+    el('inCode').value = roomCode;
+    // Đợi người dùng đăng nhập xong mới hiển thị màn hình Online
+    const checkUser = setInterval(()=>{
+      if(APP.user){
+        clearInterval(checkUser);
+        showScreen('online');
+      }
+    }, 500);
+  }
+})();
 </script>
 </body>
 </html>
