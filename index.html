@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Ma Sói: Lời Nói Dối Cuối Cùng</title>
-<!-- Thư viện PeerJS để chơi Online thực sự P2P -->
+<!-- Thư viện PeerJS -->
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root{
@@ -257,7 +257,7 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
     style="text-transform:uppercase;text-align:center;letter-spacing:.3em;font-size:20px"/>
   <button id="btnJoin" class="btnMain">Tham gia</button>
   <button class="btnBack" data-back="menu">← Quay lại</button>
-  <div class="hint">ⓘ Để chơi cùng bạn bè: chủ phòng tạo mã, gửi mã cho bạn. Bạn bè nhập mã để vào. (Có thể chơi khác mạng, khác thiết bị).</div>
+  <div class="hint">ⓘ Chủ phòng tạo mã, gửi mã cho bạn bè. Bạn bè nhập mã để vào. Hỗ trợ xuyên mạng 4G/Wifi.</div>
 </div></div>
 
 <!-- ====== LOBBY ====== -->
@@ -397,10 +397,10 @@ const COMP={
 ========================================================= */
 const APP={
   user:null, role:null, roomCode:null,
-  peer:null, conn:null, connections:[], // PeerJS
+  peer:null, conn:null, peerConns:{}, // PeerJS objects
   myId:null, uuid:'u'+Math.random().toString(36).slice(2)+Date.now(),
   myRole:null, lobbyPlayers:[], maxPlayers:8,
-  onRoleOk:null, readyCount:0, totalHumans:0
+  onRoleOk:null, readyCount:0, totalHumans:0, peerReady:false
 };
 
 const G={
@@ -423,22 +423,35 @@ function showScreen(n){
 }
 
 /* =========================================================
-   NETWORK (PeerJS)
+   NETWORK (PeerJS with TURN servers)
 ========================================================= */
+const PEER_CONFIG = {
+  debug: 1,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+    ],
+    iceCandidatePoolSize: 10
+  }
+};
+
 function broadcast(msg){
-  if(!APP.connections) return;
-  APP.connections.forEach(c=>{
-    if(c.open) c.send(msg);
+  Object.values(APP.peerConns).forEach(c=>{
+    if(c && c.open) c.send(msg);
   });
 }
 function sendTo(uuid,msg){
-  if(!APP.connections) return;
-  const c=APP.connections.find(x=>x.peer===uuid);
-  if(c&&c.open) c.send(msg);
+  const c = APP.peerConns[uuid];
+  if(c && c.open) c.send(msg);
 }
 
 /* =========================================================
-   LOG (with broadcast)
+   LOG
 ========================================================= */
 function log(html,cls=''){
   const d=document.createElement('div');
@@ -492,7 +505,7 @@ function setPhase(p){
 }
 
 /* =========================================================
-   CHOICES (local)
+   CHOICES
 ========================================================= */
 function showChoices(options){
   return new Promise(resolve=>{
@@ -533,7 +546,7 @@ function showWaiting(text){
 }
 
 /* =========================================================
-   ASK PLAYER (prompt)
+   ASK PLAYER
 ========================================================= */
 let promptSeq=0;
 const pendingPrompts={};
@@ -550,7 +563,6 @@ async function ask(pid,kind,payload){
       return await showTargets(payload.prompt,payload.candidates);
     }
   }
-  // remote
   return new Promise(resolve=>{
     const id='p'+(++promptSeq);
     pendingPrompts[id]=resolve;
@@ -658,6 +670,7 @@ el('btnCreate').onclick=()=>{
   APP.myId=0;
   APP.maxPlayers=8;
   APP.lobbyPlayers=[{id:0,uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar,isHost:true}];
+  APP.peerConns={};
   
   el('codeDisp').textContent=APP.roomCode;
   el('hostCtrl').style.display='block';
@@ -666,36 +679,46 @@ el('btnCreate').onclick=()=>{
   renderLobby();
   showScreen('lobby');
   
-  // Khởi tạo PeerJS Host
-  if(APP.peer) APP.peer.destroy();
-  APP.peer = new Peer('masoi-'+APP.roomCode, {debug:1});
-  APP.connections = [];
+  startHostPeer();
+};
+
+function startHostPeer() {
+  if (APP.peer) APP.peer.destroy();
+  APP.peer = new Peer('masoi-'+APP.roomCode, PEER_CONFIG);
+  APP.peerReady = false;
   
   APP.peer.on('open', (id) => {
+    APP.peerReady = true;
     beep(680,.12,'sine',.04);
-    broadcast({t:'lobby',players:APP.lobbyPlayers,maxPlayers:APP.maxPlayers});
+    broadcastLobby();
+    renderLobby();
   });
   
   APP.peer.on('connection', (conn) => {
-    APP.connections.push(conn);
-    
     conn.on('data', (data) => {
       hostMsg({data, conn});
     });
     
     conn.on('close', () => {
-      APP.connections = APP.connections.filter(c=>c!==conn);
-      APP.lobbyPlayers = APP.lobbyPlayers.filter(p=>p.conn !== conn);
-      // Clean up players if in game
-      broadcastLobby();
-      renderLobby();
+      const uuid = Object.keys(APP.peerConns).find(k => APP.peerConns[k] === conn);
+      if (uuid) {
+        delete APP.peerConns[uuid];
+        APP.lobbyPlayers = APP.lobbyPlayers.filter(p => p.uuid !== uuid);
+        broadcastLobby(); renderLobby();
+      }
     });
   });
   
   APP.peer.on('error', (err) => {
-    alert('Lỗi kết nối mạng: '+err.type);
+    if (err.type === 'unavailable-id') {
+      APP.roomCode = genCode();
+      el('codeDisp').textContent = APP.roomCode;
+      startHostPeer();
+    } else {
+      alert('Lỗi máy chủ kết nối: ' + err.type + '\nThử tải lại trang hoặc đổi mạng.');
+    }
   });
-};
+}
 
 el('btnJoin').onclick=()=>{
   const code=(el('inCode').value||'').trim().toUpperCase();
@@ -711,7 +734,7 @@ el('btnJoin').onclick=()=>{
   showScreen('lobby');
   
   if(APP.peer) APP.peer.destroy();
-  APP.peer = new Peer({debug:1});
+  APP.peer = new Peer(PEER_CONFIG);
   
   APP.peer.on('open', () => {
     APP.conn = APP.peer.connect('masoi-'+APP.roomCode);
@@ -719,6 +742,7 @@ el('btnJoin').onclick=()=>{
     APP.conn.on('open', () => {
       beep(680,.12,'sine',.04);
       APP.conn.send({t:'join',uuid:APP.uuid,name:APP.user.name,avatar:APP.user.avatar});
+      el('lobbyList').innerHTML='<div class="waiting">Đã kết nối. Đang chờ dữ liệu phòng...</div>';
     });
     
     APP.conn.on('data', (data) => {
@@ -729,17 +753,25 @@ el('btnJoin').onclick=()=>{
       alert('Mất kết nối với chủ phòng!');
       showScreen('menu');
     });
+    
+    APP.conn.on('error', (err) => {
+      el('lobbyList').innerHTML='<div class="muted">Lỗi kết nối: Không thể tạo đường truyền P2P.</div>';
+    });
   });
   
   APP.peer.on('error', (err) => {
-    el('lobbyList').innerHTML='<div class="muted" style="padding:20px">Không tìm thấy phòng. Kiểm tra mã hoặc chủ phòng chưa mở.</div>';
+    if (err.type === 'peer-unavailable') {
+      el('lobbyList').innerHTML='<div class="muted">Không tìm thấy phòng. Chủ phòng có thể chưa mở hoặc mã sai.</div>';
+    } else {
+      el('lobbyList').innerHTML='<div class="muted">Lỗi mạng: ' + err.type + '</div>';
+    }
   });
 };
 
 el('btnLeave').onclick=()=>{
   if(APP.conn) APP.conn.close();
   if(APP.peer) APP.peer.destroy();
-  APP.peer=null;APP.conn=null;APP.connections=[];
+  APP.peer=null;APP.conn=null;APP.peerConns={};
   APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];
   showScreen('menu');
 };
@@ -778,11 +810,15 @@ function renderLobby(){
     d.innerHTML=`<div class="lav">🤖</div><div class="lname">Bot (tự động lấp)</div><div class="ltag">Sẽ thêm</div>`;
     list.appendChild(d);
   }
-  el('btnStartOnline').disabled=APP.lobbyPlayers.length<1;
+  el('btnStartOnline').disabled = !(APP.peerReady && APP.lobbyPlayers.length >= 1);
 }
 
 function broadcastLobby(){
-  broadcast({t:'lobby',players:APP.lobbyPlayers,maxPlayers:APP.maxPlayers});
+  // Strip conn object to avoid circular JSON error
+  const safePlayers = APP.lobbyPlayers.map(p=>({
+    id:p.id, uuid:p.uuid, name:p.name, avatar:p.avatar, isHost:p.isHost
+  }));
+  broadcast({t:'lobby',players:safePlayers,maxPlayers:APP.maxPlayers});
 }
 
 function hostMsg({data:m, conn}){
@@ -792,9 +828,13 @@ function hostMsg({data:m, conn}){
       return;
     }
     if(APP.lobbyPlayers.find(p=>p.uuid===m.uuid)) return;
+    
     const id=APP.lobbyPlayers.length;
-    APP.lobbyPlayers.push({id,uuid:m.uuid,name:m.name,avatar:m.avatar,isHost:false,conn});
-    broadcastLobby(); renderLobby();
+    APP.lobbyPlayers.push({id,uuid:m.uuid,name:m.name,avatar:m.avatar,isHost:false});
+    APP.peerConns[m.uuid] = conn; // Save connection map
+    
+    broadcastLobby(); 
+    renderLobby();
   } else if(m.t==='leave'){
     APP.lobbyPlayers=APP.lobbyPlayers.filter(p=>p.uuid!==m.uuid);
     broadcastLobby(); renderLobby();
@@ -889,7 +929,6 @@ el('btnStartOnline').onclick=async()=>{
   APP.readyCount=1;
   APP.totalHumans=humans.length;
 
-  // Broadcast initial state
   broadcast({t:'state',players:publicPlayers(),day:G.day,phase:'night'});
   broadcast({t:'log',html:`🌙 <b>Đêm 1</b> — Sương mù tràn qua những mái nhà.`,cls:'night'});
 
@@ -1670,9 +1709,9 @@ function renderEnd(winner,roles,myRole,myId){
 el('btnAgain').onclick=()=>{
   if(APP.conn) APP.conn.close();
   if(APP.peer) APP.peer.destroy();
-  APP.peer=null;APP.conn=null;APP.connections=[];
+  APP.peer=null;APP.conn=null;APP.peerConns={};
   APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];APP.myId=null;APP.myRole=null;
-  APP.onRoleOk=null;APP.readyCount=0;
+  APP.onRoleOk=null;APP.readyCount=0;APP.peerReady=false;
   G.over=false;
   el('actions').innerHTML='';
   clearLog();
