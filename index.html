@@ -28,7 +28,7 @@ body{background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman
 .screen.on{display:flex}
 
 /* CENTERED SCREENS */
-#s-login,#s-menu,#s-bot,#s-online,#s-lobby,#s-dealing,#s-end{
+#s-login,#s-menu,#s-bot,#s-online,#s-lobby,#s-dealing,#s-end,#s-friends{
   align-items:center;justify-content:center;text-align:center;padding:24px}
 .inner{max-width:640px;width:100%}
 .title{font-size:clamp(28px,7vw,56px);letter-spacing:.12em;color:var(--gold);
@@ -112,6 +112,9 @@ body.night .pill{border-color:#3a4a72;color:#8fb0ff;box-shadow:0 0 18px rgba(80,
 body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(201,162,39,.25)}
 .roleMini{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
 .roleMini b{color:var(--gold)}
+.btnExit{background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:5px 10px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;transition:0.2s}
+.btnExit:hover{border-color:var(--blood-l);color:var(--blood-l)}
 .body{display:flex;flex:1;min-height:0}
 .sidebar{width:200px;flex-shrink:0;border-right:1px solid var(--line);
   background:rgba(10,10,16,.72);overflow-y:auto;padding:12px}
@@ -233,7 +236,23 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
     <div class="modeTitle">🌐 Chơi Online với bạn bè</div>
     <div class="modeDesc">Tạo phòng, chia sẻ mã, chơi cùng nhau qua Internet. Tự động thêm Bot.</div>
   </button>
+  <button id="btnFriends" class="modeBtn">
+    <div class="modeTitle">👥 Bạn bè</div>
+    <div class="modeDesc">Quản lý danh sách bạn bè đã chơi cùng.</div>
+  </button>
   <button class="btnBack" id="btnLogout">← Đăng xuất</button>
+</div></div>
+
+<!-- ====== FRIENDS ====== -->
+<div id="s-friends" class="screen"><div class="inner">
+  <h2 class="title" style="font-size:24px">BẠN BÈ</h2>
+  <div class="divider"></div>
+  <div id="friendList" class="lobbyList"></div>
+  <div style="display:flex;gap:10px;margin-top:16px">
+    <input id="inFriendName" class="txt" placeholder="Nhập tên bạn bè..." style="flex:1"/>
+    <button id="btnAddFriend" class="btnMain" style="margin-top:0;padding:10px 20px">Thêm</button>
+  </div>
+  <button class="btnBack" data-back="menu" style="margin-top:24px">← Quay lại</button>
 </div></div>
 
 <!-- ====== BOT SETUP ====== -->
@@ -288,6 +307,7 @@ body.day .pill{border-color:#7a6317;color:var(--gold);box-shadow:0 0 18px rgba(2
     <div class="brand">🐺 MA SÓI</div>
     <div class="pill" id="pill">ĐÊM 1</div>
     <div class="roleMini" id="roleMini"></div>
+    <button id="btnExitGame" class="btnExit">Thoát</button>
   </div>
   <div class="body">
     <aside class="sidebar"><h3>Dân Làng</h3><div id="pList"></div></aside>
@@ -397,7 +417,7 @@ const COMP={
 ========================================================= */
 const APP={
   user:null, role:null, roomCode:null,
-  peer:null, conn:null, peerConns:{}, // PeerJS objects
+  peer:null, conn:null, peerConns:{},
   myId:null, uuid:'u'+Math.random().toString(36).slice(2)+Date.now(),
   myRole:null, lobbyPlayers:[], maxPlayers:8,
   onRoleOk:null, readyCount:0, totalHumans:0, peerReady:false
@@ -415,6 +435,45 @@ const isWolf=p=>p.role==='wolf'||p.role==='whitewolf'||p.role==='traitor';
 const seerView=p=>p.role==='traitor'?'village':(isWolf(p)?'wolf':'village');
 
 /* =========================================================
+   FRIENDS SYSTEM
+========================================================= */
+function getFriends(){
+  try{ return JSON.parse(localStorage.getItem('masoi_friends')||'[]'); }
+  catch(e){ return []; }
+}
+function saveFriends(list){
+  localStorage.setItem('masoi_friends', JSON.stringify(list));
+}
+function addFriend(name, avatar){
+  const list = getFriends();
+  if(list.find(f=>f.name===name)){ alert('Đã có trong danh sách bạn bè!'); return; }
+  list.push({name, avatar});
+  saveFriends(list);
+  alert('Đã kết bạn với '+name);
+}
+function renderFriends(){
+  const list = getFriends();
+  const elList = el('friendList');
+  elList.innerHTML = '';
+  if(!list.length){
+    elList.innerHTML = '<div class="muted">Chưa có bạn bè nào.</div>';
+    return;
+  }
+  list.forEach(f=>{
+    const d = document.createElement('div');
+    d.className = 'lobbyItem';
+    d.innerHTML = `<div class="lav">${f.avatar}</div><div class="lname">${f.name}</div>
+      <button style="margin-left:auto;background:transparent;border:none;color:var(--blood-l);cursor:pointer;font-size:12px" onclick="removeFriend('${f.name}')">Xóa</button>`;
+    elList.appendChild(d);
+  });
+}
+window.removeFriend = (name) => {
+  let list = getFriends().filter(f=>f.name!==name);
+  saveFriends(list);
+  renderFriends();
+};
+
+/* =========================================================
    SCREEN
 ========================================================= */
 function showScreen(n){
@@ -423,7 +482,7 @@ function showScreen(n){
 }
 
 /* =========================================================
-   NETWORK (PeerJS with TURN servers)
+   NETWORK (PeerJS)
 ========================================================= */
 const PEER_CONFIG = {
   debug: 1,
@@ -546,7 +605,7 @@ function showWaiting(text){
 }
 
 /* =========================================================
-   ASK PLAYER
+   ASK PLAYER (STRICT CHECK FOR ALIVE)
 ========================================================= */
 let promptSeq=0;
 const pendingPrompts={};
@@ -554,6 +613,9 @@ const pendingPrompts={};
 async function ask(pid,kind,payload){
   const p=G.players.find(x=>x.id===pid);
   if(!p) return null;
+  // Người chết không được hành động (ngoại trừ Thợ Săn lúc chết)
+  if(!p.alive && p.role !== 'hunter') return null; 
+  
   const isLocal = (APP.role==='solo') || (APP.role==='host' && p.isHost);
   if(isLocal){
     if(kind==='choice'){
@@ -569,7 +631,7 @@ async function ask(pid,kind,payload){
     sendTo(p.uuid,{t:'prompt',id,kind,payload});
     setTimeout(()=>{
       if(pendingPrompts[id]){ delete pendingPrompts[id]; resolve(null); }
-    },60000);
+    },30000);
   });
 }
 
@@ -614,6 +676,18 @@ el('btnLogout').onclick=()=>{APP.user=null;localStorage.removeItem('masoi_user')
 document.querySelectorAll('[data-back="menu"]').forEach(b=>{b.onclick=()=>showScreen('menu');});
 
 /* =========================================================
+   MENU ACTIONS
+========================================================= */
+el('btnFriends').onclick=()=>{
+  renderFriends();
+  showScreen('friends');
+};
+el('btnAddFriend').onclick=()=>{
+  const name = el('inFriendName').value.trim();
+  if(name){ addFriend(name, '🧑'); el('inFriendName').value=''; }
+};
+
+/* =========================================================
    BOT SETUP
 ========================================================= */
 (function(){
@@ -653,6 +727,23 @@ el('btnStartBot').onclick=async()=>{
     el('roleOv').classList.add('hide');
     setTimeout(()=>gameLoop(),200);
   };
+};
+
+/* =========================================================
+   EXIT GAME
+========================================================= */
+el('btnExitGame').onclick=()=>{
+  if(confirm('Bạn có chắc muốn thoát ván đấu? (Nếu là chủ phòng, phòng sẽ đóng)')){
+    if(APP.conn) APP.conn.close();
+    if(APP.peer) APP.peer.destroy();
+    APP.peer=null;APP.conn=null;APP.peerConns={};
+    APP.role=null;APP.roomCode=null;APP.lobbyPlayers=[];APP.myId=null;APP.myRole=null;
+    APP.onRoleOk=null;APP.readyCount=0;APP.peerReady=false;
+    G.over=true; // Dừng vòng lặp game
+    el('actions').innerHTML='';
+    clearLog();
+    showScreen('menu');
+  }
 };
 
 /* =========================================================
@@ -814,7 +905,6 @@ function renderLobby(){
 }
 
 function broadcastLobby(){
-  // Strip conn object to avoid circular JSON error
   const safePlayers = APP.lobbyPlayers.map(p=>({
     id:p.id, uuid:p.uuid, name:p.name, avatar:p.avatar, isHost:p.isHost
   }));
@@ -831,7 +921,7 @@ function hostMsg({data:m, conn}){
     
     const id=APP.lobbyPlayers.length;
     APP.lobbyPlayers.push({id,uuid:m.uuid,name:m.name,avatar:m.avatar,isHost:false});
-    APP.peerConns[m.uuid] = conn; // Save connection map
+    APP.peerConns[m.uuid] = conn;
     
     broadcastLobby(); 
     renderLobby();
@@ -867,6 +957,12 @@ function clientMsg({data:m}){
     G.phase=m.phase;
     renderPlayers();
     setPhase(m.phase);
+    
+    // FIX LỖI: Người chết hiển thị thông báo, xoá các nút cũ
+    const me = G.players.find(p=>p.id===APP.myId);
+    if(me && !me.alive && me.role !== 'hunter'){
+        el('actions').innerHTML='<div class="waiting">Bạn đã chết. Hãy theo dõi ván đấu.</div>';
+    }
   } else if(m.t==='log'){
     log(m.html,m.cls);
   } else if(m.t==='prompt'){
@@ -893,6 +989,12 @@ async function handleClientStart(){
 }
 
 function handleClientPrompt(m){
+  const me = G.players.find(p=>p.id===APP.myId);
+  if(me && !me.alive && me.role !== 'hunter'){
+    if(APP.conn) APP.conn.send({t:'reply',id:m.id,value:null});
+    return;
+  }
+  
   if(m.kind==='choice'){
     if(m.payload.logMsg) log(m.payload.logMsg,'night');
     showChoices(m.payload.options).then(c=>{
@@ -1415,6 +1517,7 @@ async function defenseRound(){
 }
 
 async function humanDefend(actor){
+  if(!actor.alive) return;
   const text=await showDefenseModal(actor);
   if(text===null){
     bLog(`<b>${actor.name}</b>: "..."`,'player');
@@ -1657,7 +1760,7 @@ function endGame(winner){
   if(G.over) return;
   G.over=true;
   const roles=G.players.map(p=>({
-    id:p.id,name:p.name,avatar:p.avatar,role:p.role,alive:p.alive
+    id:p.id,name:p.name,avatar:p.avatar,role:p.role,alive:p.alive,isBot:p.isBot
   }));
   if(APP.role==='host'){
     broadcast({t:'end',winner,roles});
@@ -1699,6 +1802,14 @@ function renderEnd(winner,roles,myRole,myId){
     d.innerHTML=`<div class="rname">${p.avatar} ${p.name}${isMe?' ★':''}</div>
       <div class="rrole" style="color:${r?r.color:'#888'}">${r?r.icon+' '+r.name:p.role}</div>
       <div style="font-size:10px;color:#5f5a50;margin-top:3px">${p.alive?'còn sống':'đã chết'}</div>`;
+    
+    if(!isMe && !p.isBot){
+       const btn = document.createElement('button');
+       btn.textContent = 'Kết bạn';
+       btn.style = 'margin-top:6px;background:transparent;border:1px solid var(--gold-dim);color:var(--gold);padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;width:100%;';
+       btn.onclick = () => addFriend(p.name, p.avatar);
+       d.appendChild(btn);
+    }
     grid.appendChild(d);
   });
 
